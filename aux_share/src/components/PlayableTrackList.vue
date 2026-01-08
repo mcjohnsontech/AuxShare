@@ -3,7 +3,16 @@
 <template>
     <div class="playable-track-list">
       <div class="header">
-        <h3>🎵 {{ tracks.length }} Songs Ready to Play</h3>
+        <div class="header-content">
+          <h3>🎵 {{ tracks.length }} Songs Ready to Play</h3>
+          <button 
+            v-if="canPlayQueue" 
+            class="play-all-button" 
+            @click="$emit('play-all')"
+          >
+            ▶️ Play Queue
+          </button>
+        </div>
         <div class="platform-badge">
           <span class="icon">{{ getPlatformIcon(targetPlatform) }}</span>
           <span class="name">{{ getPlatformName(targetPlatform) }}</span>
@@ -31,7 +40,7 @@
               :href="getTrackUrl(track)"
               target="_blank"
               class="play-button"
-              @click="trackPlayClick(track)"
+              @click.prevent="trackPlayClick(track, index)"
             >
               ▶️ Play
             </a>
@@ -176,9 +185,22 @@
     return names[platform] || platform
   }
   
-  function trackPlayClick(track) {
-    console.log('Playing track:', track.title)
+  const canPlayQueue = computed(() => {
+    return ['apple_music', 'youtube_music'].includes(props.targetPlatform)
+  })
+
+  function trackPlayClick(track, index) {
+    if (canPlayQueue.value) {
+      // Emit event for in-app player
+      emit('play-track', index)
+    } else {
+      // Fallback: Default behavior (follow link)
+      window.open(getTrackUrl(track), '_blank')
+    }
   }
+
+  const emit = defineEmits(['play-all', 'play-track'])
+
   </script>
   
   <style scoped>
@@ -198,10 +220,32 @@
     border-bottom: 2px solid #e0e0e0;
   }
   
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
   h3 {
     margin: 0;
     color: #333;
     font-size: 1.5rem;
+  }
+ 
+  .play-all-button {
+    padding: 8px 16px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .play-all-button:hover {
+    transform: scale(1.05);
+    background: #764ba2;
   }
   
   .platform-badge {

@@ -48,7 +48,12 @@ class MusicPlatform(ABC):
                 return result
         
         # Fallback to title + artist search
-        result = self.search_by_metadata(track['title'], track['artists'])
+        artist = track.get('artist') or track.get('artists')
+        if not artist:
+            # If still no artist (shouldn't happen), try empty string or return None
+            return None
+            
+        result = self.search_by_metadata(track['title'], artist)
         if result:
             result['match_method'] = 'metadata'
             # Confidence will be set by the implementation

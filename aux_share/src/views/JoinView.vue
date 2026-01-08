@@ -32,6 +32,8 @@
           v-if="playlistStore.targetPlatform"
           :tracks="playlistStore.tracks"
           :target-platform="playlistStore.targetPlatform"
+          @play-all="startQueue(0)"
+          @play-track="startQueue"
         />
         
         <!-- Debug: Show if platform is missing -->
@@ -41,6 +43,17 @@
           <p>Please create a new session.</p>
         </div>
       </div>
+    
+      <!-- Queue Player Overlay -->
+      <QueuePlayer
+        :is-open="isPlayerOpen"
+        :tracks="playlistStore.tracks"
+        :initial-index="currentTrackIndex"
+        :platform="playlistStore.targetPlatform"
+        @close="closePlayer"
+        @next-track="onTrackChange"
+        @prev-track="onTrackChange"
+      />
     </div>
   </div>
 </template>
@@ -50,12 +63,31 @@ import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePlaylistStore } from '@/stores/playlist'
 import PlayableTrackList from '@/components/PlayableTrackList.vue'
+import QueuePlayer from '@/components/QueuePlayer.vue'
+import { ref } from 'vue'
 
 const route = useRoute()
 const playlistStore = usePlaylistStore()
 
 const loading = computed(() => playlistStore.loading)
 const error = computed(() => playlistStore.error)
+
+// Player State
+const isPlayerOpen = ref(false)
+const currentTrackIndex = ref(0)
+
+function startQueue(index = 0) {
+  currentTrackIndex.value = index
+  isPlayerOpen.value = true
+}
+
+function closePlayer() {
+  isPlayerOpen.value = false
+}
+
+function onTrackChange(index) {
+  currentTrackIndex.value = index
+}
 
 onMounted(async () => {
   const code = route.params.code

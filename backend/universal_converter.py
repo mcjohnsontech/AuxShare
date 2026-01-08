@@ -61,7 +61,7 @@ class UniversalConverter:
         # Step 5: Match each track to target platform
         matched_tracks = []
         for i, track in enumerate(source_tracks, 1):
-            print(f"  [{i}/{len(source_tracks)}] {track['title']} - {track['artists']}")
+            print(f"  [{i}/{len(source_tracks)}] {track['title']} - {track['artist']}")
             
             target_match = target_platform.match_track(track)
             

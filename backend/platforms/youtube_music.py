@@ -146,7 +146,7 @@ class YouTubeMusicPlatform(MusicPlatform):
                 return {
                     'id': result['youtube_music_id'],
                     'title': result['title'],
-                    'artist': result['artist'],
+                    'artist': result['artists'],
                     'confidence': result['confidence']
                 }
         except Exception as e:
