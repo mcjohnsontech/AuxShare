@@ -5,7 +5,13 @@
     <h1 class="title">🎵 AuxParty</h1>
     <p class="subtitle">Share music across any platform in seconds</p>
     <p class="free-badge">✨ Now with FREE Apple Music support!</p>
-
+    <div class="info-box">
+      <h4>💡 Pro Tip</h4>
+      <p>
+        <strong>Spotify playlists work best!</strong><br>
+        YouTube Music playlists may occasionally fail due to API limitations.
+      </p>
+    </div>
     <!-- Platform Selector -->
     <PlatformSelector v-model="targetPlatform" />
 
@@ -150,5 +156,24 @@ async function handleSubmit() {
   border-radius: 8px;
   color: #c33;
   margin-top: 15px;
+}
+.info-box {
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+  padding: 15px;
+  margin: 20px 0;
+}
+
+.info-box h4 {
+  margin: 0 0 8px 0;
+  color: #856404;
+}
+
+.info-box p {
+  margin: 0;
+  color: #856404;
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 </style>

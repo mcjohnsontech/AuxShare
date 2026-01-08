@@ -43,7 +43,7 @@ export const usePlaylistStore = defineStore('playlist', () => {
 
       return data
     } catch (err) {
-      error.value = err.response?.data?.detail || 'Failed to convert playlist mheey'
+      error.value = err.response?.data?.detail || 'Failed to convert playlist'
       console.error('❌ Conversion error:', err)
       throw err
     } finally {
@@ -51,30 +51,38 @@ export const usePlaylistStore = defineStore('playlist', () => {
     }
   }
 
-  async function loadSession(code) {
-    loading.value = true
-    error.value = null
-    tracks.value = []
+// src/stores/playlist.js (UPDATE loadSession)
 
-    try {
-      const response = await api.getSession(code)
-      const data = response.data
+async function loadSession(code) {
+  loading.value = true
+  error.value = null
+  tracks.value = []
 
-      tracks.value = data.tracks
-      stats.value = data.stats
-      sessionCode.value = code
+  try {
+    const response = await api.getSession(code)
+    const data = response.data
 
-      console.log('✅ Session loaded:', data)
+    tracks.value = data.tracks
+    stats.value = data.stats
+    sessionCode.value = code
+    targetPlatform.value = data.target_platform  // ✅ Store it!
+    sourcePlatform.value = data.source_platform  // ✅ Store source too!
 
-      return data
-    } catch (err) {
-      error.value = err.response?.data?.detail || 'Session not found or expired'
-      console.error('❌ Session error:', err)
-      throw err
-    } finally {
-      loading.value = false
-    }
+    console.log('✅ Session loaded:', {
+      tracks: tracks.value.length,
+      targetPlatform: targetPlatform.value,
+      sourcePlatform: sourcePlatform.value
+    })
+
+    return data
+  } catch (err) {
+    error.value = err.response?.data?.detail || 'Session not found or expired'
+    console.error('❌ Session error:', err)
+    throw err
+  } finally {
+    loading.value = false
   }
+}
 
   function reset() {
     tracks.value = []

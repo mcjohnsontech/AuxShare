@@ -81,16 +81,12 @@ async def get_target_platforms():
     """Get platforms that can be used as target"""
     return detector.get_supported_targets()
 
+# backend/main.py (UPDATE convert endpoint)
+
 @app.post("/api/convert", response_model=ConvertResponse)
 async def convert_playlist(request: ConvertRequest):
     """
     Convert a playlist from one platform to another
-    
-    Supported conversions (FREE):
-    - Spotify → YouTube Music
-    - Spotify → Apple Music
-    - YouTube Music → Spotify
-    - YouTube Music → Apple Music
     """
     try:
         print(f"\n🔄 New conversion request:")
@@ -100,10 +96,14 @@ async def convert_playlist(request: ConvertRequest):
         # Convert playlist
         result = converter.convert(request.url, request.target_platform)
         
-        # Save session
-        code = session_manager.save_session(result['tracks'])
+        # Save session with BOTH source and target platform info
+        code = session_manager.save_session(
+            tracks=result['tracks'],
+            target_platform=request.target_platform,  # ✅ Pass target!
+            source_platform=result['source_platform']  # ✅ Pass source!
+        )
         
-        # Build share URL (update with your actual frontend URL)
+        # Build share URL
         share_url = f"http://localhost:5173/join/{code}"
         
         print(f"\n✅ Conversion complete!")
@@ -119,12 +119,10 @@ async def convert_playlist(request: ConvertRequest):
         )
         
     except ValueError as e:
-        # User-friendly errors (e.g., unsupported platform)
         print(f"❌ Validation error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
     
     except Exception as e:
-        # Unexpected errors
         print(f"❌ Server error: {e}")
         import traceback
         traceback.print_exc()
@@ -133,27 +131,49 @@ async def convert_playlist(request: ConvertRequest):
             detail=f"Failed to convert playlist: {str(e)}"
         )
 
+        
+# backend/main.py (UPDATE get_session endpoint)
+
+class SessionResponse(BaseModel):
+    tracks: List[dict]
+    target_platform: str  # ✅ Make it required, not optional
+    source_platform: Optional[str] = None
+    stats: MatchStats
+
 @app.get("/api/session/{code}", response_model=SessionResponse)
 async def get_session(code: str):
     """
     Retrieve a saved session by code
     """
-    tracks = session_manager.get_session(code)
+    session_data = session_manager.get_session(code)
     
-    if not tracks:
+    if not session_data:
         raise HTTPException(
             status_code=404,
             detail="Session not found or expired (sessions last 24 hours)"
         )
     
-    # Recalculate stats from stored tracks
-    stats = converter._calculate_stats(tracks, 'youtube_music')  # Default platform
+    # Extract data
+    tracks = session_data.get('tracks', [])
+    target_platform = session_data.get('target_platform', 'youtube_music')
+    source_platform = session_data.get('source_platform')
+    
+    print(f"📤 Sending session {code}:")
+    print(f"   Tracks: {len(tracks)}")
+    print(f"   Target platform: {target_platform}")
+    print(f"   Source platform: {source_platform}")
+    
+    # Recalculate stats
+    stats = converter._calculate_stats(tracks, target_platform)
     
     return SessionResponse(
         tracks=tracks,
+        target_platform=target_platform,  # ✅ Return it!
+        source_platform=source_platform,
         stats=MatchStats(**stats)
     )
 
+    
 @app.get("/api/session/{code}/ttl")
 async def get_session_ttl(code: str):
     """Get remaining time for a session"""

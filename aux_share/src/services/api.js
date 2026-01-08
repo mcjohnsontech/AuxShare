@@ -7,8 +7,27 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
-  timeout: 120000 // 2 minutes for playlist conversion
+  timeout: 180000 // 2 minutes for playlist conversion
 })
+
+
+apiClient.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response) {
+      // Server returned an error
+      const message = error.response.data?.detail || error.message
+      console.error('API Error:', message)
+    } else if (error.request) {
+      // Request made but no response
+      console.error('Network Error: No response from server')
+    } else {
+      // Something else happened
+      console.error('Error:', error.message)
+    }
+    return Promise.reject(error)
+  }
+)
 
 export default {
   // Extract playlist tracks

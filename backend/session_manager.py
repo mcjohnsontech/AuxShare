@@ -1,8 +1,9 @@
-# backend/session_manager.py
+# backend/session_manager.py (COMPLETE FILE)
 
 import redis
 import json
 import secrets
+import time
 from typing import List, Dict, Optional
 
 class SessionManager:
@@ -24,12 +25,20 @@ class SessionManager:
             if not self.redis_client.exists(f"playlist:{code}"):
                 return code
     
-    def save_session(self, tracks: List[Dict], ttl: int = 86400) -> str:
+    def save_session(
+        self, 
+        tracks: List[Dict], 
+        target_platform: str = None,
+        source_platform: str = None,
+        ttl: int = 86400
+    ) -> str:
         """
         Save playlist session to Redis
         
         Args:
             tracks: List of matched track dictionaries
+            target_platform: Which platform was targeted
+            source_platform: Which platform was the source
             ttl: Time to live in seconds (default 24 hours)
         
         Returns:
@@ -38,17 +47,29 @@ class SessionManager:
         code = self.generate_code()
         key = f"playlist:{code}"
         
+        # Store tracks AND metadata
+        session_data = {
+            'tracks': tracks,
+            'target_platform': target_platform,
+            'source_platform': source_platform,
+            'created_at': time.time()
+        }
+        
         # Store as JSON
         self.redis_client.setex(
             key,
             ttl,
-            json.dumps(tracks)
+            json.dumps(session_data)
         )
         
         print(f"✅ Session saved with code: {code}")
+        print(f"   Target platform: {target_platform}")
+        print(f"   Source platform: {source_platform}")
+        print(f"   Tracks: {len(tracks)}")
+        
         return code
     
-    def get_session(self, code: str) -> Optional[List[Dict]]:
+    def get_session(self, code: str) -> Optional[Dict]:
         """
         Retrieve playlist session from Redis
         
@@ -56,7 +77,7 @@ class SessionManager:
             code: Session code
         
         Returns:
-            List of tracks or None if not found
+            Session data dict or None if not found
         """
         key = f"playlist:{code}"
         data = self.redis_client.get(key)
@@ -80,6 +101,7 @@ class SessionManager:
         key = f"playlist:{code}"
         return self.redis_client.ttl(key)
 
+
 # Test it!
 if __name__ == "__main__":
     manager = SessionManager()
@@ -90,18 +112,26 @@ if __name__ == "__main__":
             'title': 'Blinding Lights',
             'artist': 'The Weeknd',
             'spotify_id': 'abc123',
-            'youtube_music_id': 'xyz789'
+            'youtube_music_id': 'xyz789',
+            'youtube_music_url': 'https://music.youtube.com/watch?v=xyz789'
         }
     ]
     
-    # Save session
-    code = manager.save_session(test_tracks)
-    print(f"Session code: {code}")
+    # Save session with target platform
+    code = manager.save_session(
+        test_tracks, 
+        target_platform='youtube_music',
+        source_platform='Spotify'
+    )
+    print(f"\nSession code: {code}")
     
     # Retrieve session
     retrieved = manager.get_session(code)
-    print(f"Retrieved: {retrieved}")
+    print(f"\nRetrieved session:")
+    print(f"  Target platform: {retrieved['target_platform']}")
+    print(f"  Source platform: {retrieved['source_platform']}")
+    print(f"  Tracks: {len(retrieved['tracks'])}")
     
     # Check TTL
     ttl = manager.get_session_ttl(code)
-    print(f"Expires in: {ttl} seconds ({ttl/3600:.1f} hours)")
+    print(f"\nExpires in: {ttl} seconds ({ttl/3600:.1f} hours)")

@@ -1,4 +1,4 @@
-<!-- src/views/JoinView.vue -->
+<!-- src/views/JoinView.vue (UPDATED) -->
 
 <template>
   <div class="join-view">
@@ -18,23 +18,38 @@
         </router-link>
       </div>
       
-      <div v-else-if="playlistStore.hasResults">
-        <MatchStats :stats="playlistStore.stats" />
-        <TrackList 
+      <div v-else-if="playlistStore.hasResults" class="results">
+        <!-- Show source platform -->
+        <div class="stats-summary">
+          <p>
+            Playlist converted from 
+            <strong>{{ playlistStore.sourcePlatform || 'another platform' }}</strong>
+          </p>
+        </div>
+
+        <!-- Use PlayableTrackList with CORRECT platform -->
+        <PlayableTrackList 
+          v-if="playlistStore.targetPlatform"
           :tracks="playlistStore.tracks"
-          target-platform="youtube_music"
+          :target-platform="playlistStore.targetPlatform"
         />
+        
+        <!-- Debug: Show if platform is missing -->
+        <div v-else style="background: red; color: white; padding: 20px; border-radius: 12px;">
+          <h3>⚠️ Error: Target platform not found!</h3>
+          <p>This session is missing platform information.</p>
+          <p>Please create a new session.</p>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue'  // ✅ ADD computed
+import { onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePlaylistStore } from '@/stores/playlist'
-import MatchStats from '@/components/MatchStats.vue'
-import TrackList from '@/components/TrackList.vue'
+import PlayableTrackList from '@/components/PlayableTrackList.vue'
 
 const route = useRoute()
 const playlistStore = usePlaylistStore()
@@ -48,12 +63,25 @@ onMounted(async () => {
   if (code) {
     try {
       await playlistStore.loadSession(code)
+      
+      // Debug logging
+      console.log('🎵 Session loaded in JoinView')
+      console.log('   Tracks:', playlistStore.tracks.length)
+      console.log('   Target Platform:', playlistStore.targetPlatform)
+      console.log('   Source Platform:', playlistStore.sourcePlatform)
+      
+      // Log first track structure
+      if (playlistStore.tracks.length > 0) {
+        console.log('   First track keys:', Object.keys(playlistStore.tracks[0]))
+      }
+      
     } catch (err) {
-      // Error handled in store
+      console.error('Failed to load session:', err)
     }
   }
 })
 </script>
+
 
 <style scoped>
 .join-view {
@@ -63,7 +91,7 @@ onMounted(async () => {
 }
 
 .container {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
 }
 
@@ -71,7 +99,7 @@ onMounted(async () => {
   font-size: 3rem;
   color: white;
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
 }
 
 .loading {
@@ -124,5 +152,27 @@ onMounted(async () => {
 
 .home-button:hover {
   transform: translateY(-2px);
+}
+
+.results {
+  margin-top: 20px;
+}
+
+.stats-summary {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 15px;
+  border-radius: 12px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.stats-summary p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.stats-summary strong {
+  color: #ffd700;
 }
 </style>
