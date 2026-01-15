@@ -5,7 +5,7 @@
       <div class="player-header">
         <h3>Now Playing</h3>
         <button class="close-button" @click="close">
-          ✕
+          <X class="close-icon" />
         </button>
       </div>
 
@@ -56,15 +56,16 @@
         <!-- Controls -->
         <div class="controls">
           <button class="control-btn prev" @click="prev" :disabled="!hasPrev">
-            ⏮
+            <SkipBack class="control-icon" />
           </button>
           
           <button class="control-btn play-pause" @click="togglePlay">
-             {{ isPlaying ? '⏸' : '▶️' }}
+             <Pause v-if="isPlaying" class="play-icon" />
+             <Play v-else class="play-icon ml-1" />
           </button>
           
           <button class="control-btn next" @click="next" :disabled="!hasNext">
-            ⏭
+            <SkipForward class="control-icon" />
           </button>
         </div>
         
@@ -91,6 +92,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { X, Play, Pause, SkipBack, SkipForward } from 'lucide-vue-next'
 
 const props = defineProps({
   tracks: {
@@ -231,7 +233,7 @@ function formatTime(seconds) {
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(5px);
   z-index: 1000;
   display: flex;
   justify-content: center;
@@ -242,44 +244,55 @@ function formatTime(seconds) {
 .player-container {
   width: 90%;
   max-width: 450px;
-  background: #1a1a1a;
-  border-radius: 20px;
+  background: var(--mantine-color-dark-6);
+  border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-  border: 1px solid #333;
+  border: 1px solid #373A40;
   display: flex;
   flex-direction: column;
 }
 
 .player-header {
-  padding: 15px 20px;
+  padding: 16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(255,255,255,0.05);
+  border-bottom: 1px solid #373A40;
 }
 
 .player-header h3 {
   margin: 0;
-  color: white;
+  color: var(--mantine-color-gray-0);
   font-size: 1rem;
+  font-weight: 600;
 }
 
 .close-button {
   background: none;
   border: none;
-  color: #999;
-  font-size: 1.5rem;
+  color: var(--mantine-color-gray-5);
   cursor: pointer;
-  padding: 0;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
 }
 
 .close-button:hover {
-  color: white;
+  color: var(--mantine-color-gray-0);
+  background: rgba(255,255,255,0.1);
+}
+
+.close-icon {
+    width: 20px;
+    height: 20px;
 }
 
 .player-content {
-  padding: 20px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -287,12 +300,13 @@ function formatTime(seconds) {
 
 .media-display {
   width: 100%;
-  aspect-ratio: 1; /* Square */
+  aspect-ratio: 16/9; /* Standard video aspect ratio looks better for player */
   background: #000;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   position: relative;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 .youtube-embed-container {
@@ -317,46 +331,48 @@ function formatTime(seconds) {
 .track-details {
   text-align: center;
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .track-title {
-  color: white;
-  margin: 0 0 5px 0;
-  font-size: 1.4rem;
+  color: var(--mantine-color-gray-0);
+  margin: 0 0 4px 0;
+  font-size: 1.25rem;
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .track-artist {
-  color: #aaa;
+  color: var(--mantine-color-gray-5);
   margin: 0;
   font-size: 1rem;
 }
 
 .track-album {
-  color: #666;
-  font-size: 0.8rem;
+  color: #5c5f66;
+  font-size: 0.875rem;
   margin-top: 4px;
 }
 
 .progress-container {
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .progress-bar {
   width: 100%;
   height: 4px;
-  background: #333;
+  background: #373A40;
   border-radius: 2px;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
+  overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: #667eea;
+  background: var(--mantine-color-grape-9);
   border-radius: 2px;
   transition: width 0.1s linear;
 }
@@ -364,24 +380,26 @@ function formatTime(seconds) {
 .time-labels {
   display: flex;
   justify-content: space-between;
-  color: #666;
+  color: #5c5f66;
   font-size: 0.75rem;
 }
 
 .controls {
   display: flex;
   align-items: center;
-  gap: 30px;
-  margin-bottom: 10px;
+  gap: 24px;
+  margin-bottom: 16px;
 }
 
 .control-btn {
   background: none;
   border: none;
-  font-size: 2rem;
   cursor: pointer;
-  color: white;
+  color: var(--mantine-color-gray-0);
   transition: transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .control-btn:disabled {
@@ -393,29 +411,40 @@ function formatTime(seconds) {
   transform: scale(0.9);
 }
 
-.play-pause {
-  font-size: 3rem;
-  width: 70px;
-  height: 70px;
-  background: white;
-  border-radius: 50%;
-  color: black;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  /* Fix optical centering for play icon */
-  padding-left: 4px; 
+.control-icon {
+    width: 28px;
+    height: 28px;
 }
 
-.play-pause:active {
-  transform: scale(0.95);
+.play-pause {
+  width: 56px;
+  height: 56px;
+  background: var(--mantine-color-grape-9);
+  border-radius: 50%;
+  color: white;
+  box-shadow: 0 4px 12px rgba(134, 46, 156, 0.4);
+  transition: all 0.2s;
+}
+
+.play-pause:hover {
+    background: var(--mantine-color-grape-7);
+    transform: scale(1.05);
+}
+
+.play-icon {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+.ml-1 {
+    margin-left: 2px; /* Visual center adjustment */
 }
 
 .player-note {
-  font-size: 0.8rem;
-  color: #666;
-  margin-top: 10px;
+  font-size: 0.875rem;
+  color: #5c5f66;
+  margin-top: 8px;
 }
 
 @keyframes fadeIn {

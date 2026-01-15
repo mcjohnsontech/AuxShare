@@ -21,7 +21,7 @@ class PlatformDetector:
                 ],
                 'display_name': 'Spotify',
                 'can_extract': True,  # Can use as source
-                'icon': '🟢'
+                'icon_id': 'spotify'
             },
             'youtube_music': {
                 'handler': YouTubeMusicPlatform(),
@@ -30,7 +30,7 @@ class PlatformDetector:
                 ],
                 'display_name': 'YouTube Music',
                 'can_extract': True,
-                'icon': '🔴'
+                'icon_id': 'youtube'
             },
             'apple_music': {
                 'handler': AppleMusicPlatform(),
@@ -39,7 +39,7 @@ class PlatformDetector:
                 ],
                 'display_name': 'Apple Music',
                 'can_extract': False,  # FREE version can't extract
-                'icon': '🎵'
+                'icon_id': 'apple'
             }
         }
     
@@ -58,7 +58,7 @@ class PlatformDetector:
                         'handler': config['handler'],
                         'display_name': config['display_name'],
                         'can_extract': config['can_extract'],
-                        'icon': config['icon']
+                        'icon': config['icon_id']
                     }
         return None
     
@@ -74,7 +74,7 @@ class PlatformDetector:
                 'name': name,
                 'display_name': config['display_name'],
                 'can_extract': config['can_extract'],
-                'icon': config['icon']
+                'icon': config['icon_id']
             }
             for name, config in self.platforms.items()
         ]
@@ -85,7 +85,7 @@ class PlatformDetector:
             {
                 'name': name,
                 'display_name': config['display_name'],
-                'icon': config['icon']
+                'icon': config['icon_id']
             }
             for name, config in self.platforms.items()
             if config['can_extract']

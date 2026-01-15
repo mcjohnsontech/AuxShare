@@ -29,6 +29,7 @@ backend/.env.production.local
 aux_share/node_modules
 aux_share/dist
 aux_share/build
+aux_share/.vscode
 aux_share/coverage
 aux_share/logs
 aux_share/logs/*

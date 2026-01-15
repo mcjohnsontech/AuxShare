@@ -50,3 +50,41 @@ class SpotifyPlatform(MusicPlatform):
         else:
             # Would need to create a playlist here
             return f"spotify:search:{'+'.join(track_ids[:5])}"
+
+    def create_playlist(self, access_token: str, name: str, description: str = "") -> str:
+        """Create a new playlist and return its ID"""
+        import requests
+        
+        # 1. Get User ID
+        headers = {'Authorization': f'Bearer {access_token}'}
+        user_resp = requests.get('https://api.spotify.com/v1/me', headers=headers)
+        if user_resp.status_code != 200:
+            raise Exception("Failed to get user info")
+        user_id = user_resp.json()['id']
+        
+        # 2. Create Playlist
+        url = f"https://api.spotify.com/v1/users/{user_id}/playlists"
+        data = {
+            "name": name,
+            "description": description,
+            "public": False
+        }
+        
+        resp = requests.post(url, headers=headers, json=data)
+        if resp.status_code not in [200, 201]:
+            raise Exception(f"Failed to create playlist: {resp.text}")
+            
+        return resp.json()['id']
+
+    def add_tracks_to_playlist(self, access_token: str, playlist_id: str, track_uris: List[str]):
+        """Add tracks to a playlist"""
+        import requests
+        
+        url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+        headers = {'Authorization': f'Bearer {access_token}'}
+        
+        # Spotify allows max 100 tracks per request
+        for i in range(0, len(track_uris), 100):
+            chunk = track_uris[i:i + 100]
+            data = {"uris": chunk}
+            requests.post(url, headers=headers, json=data)

@@ -1,46 +1,57 @@
-<!-- src/views/JoinView.vue (UPDATED) -->
-
 <template>
   <div class="join-view">
     <div class="container">
-      <h1 class="title">🚗 Join Playlist Session</h1>
-      
-      <div v-if="loading" class="loading">
-        <div class="spinner"></div>
+      <div v-if="loading" class="loading-state">
+        <Loader2 class="spinner-icon" />
         <p>Loading playlist...</p>
       </div>
       
-      <div v-else-if="error" class="error">
-        <h2>❌ Session Not Found</h2>
+      <div v-else-if="error" class="error-card">
+        <AlertCircle class="error-icon" />
+        <h2>Session Not Found</h2>
         <p>{{ error }}</p>
         <router-link to="/" class="home-button">
           Create New Session
         </router-link>
       </div>
       
-      <div v-else-if="playlistStore.hasResults" class="results">
-        <!-- Show source platform -->
-        <div class="stats-summary">
-          <p>
-            Playlist converted from 
-            <strong>{{ playlistStore.sourcePlatform || 'another platform' }}</strong>
-          </p>
-        </div>
-
-        <!-- Use PlayableTrackList with CORRECT platform -->
-        <PlayableTrackList 
-          v-if="playlistStore.targetPlatform"
-          :tracks="playlistStore.tracks"
-          :target-platform="playlistStore.targetPlatform"
-          @play-all="startQueue(0)"
-          @play-track="startQueue"
-        />
+      <div v-else class="content-wrapper">
+        <h1 class="title">
+          <Radio class="title-icon" />
+          Join Playlist Session
+        </h1>
         
-        <!-- Debug: Show if platform is missing -->
-        <div v-else style="background: red; color: white; padding: 20px; border-radius: 12px;">
-          <h3>⚠️ Error: Target platform not found!</h3>
-          <p>This session is missing platform information.</p>
-          <p>Please create a new session.</p>
+        <div v-if="playlistStore.hasResults" class="results">
+          <!-- Show source platform -->
+          <div class="stats-summary">
+            <p>
+              Playlist converted from 
+              <strong>{{ playlistStore.sourcePlatform || 'another platform' }}</strong>
+            </p>
+          </div>
+
+          <!-- Helper Actions -->
+          <div class="actions-bar" v-if="playlistStore.targetPlatform === 'spotify'">
+             <ExportButton :session-code="route.params.code" />
+          </div>
+
+          <!-- Use PlayableTrackList with CORRECT platform -->
+          <PlayableTrackList 
+            v-if="playlistStore.targetPlatform"
+            :tracks="playlistStore.tracks"
+            :target-platform="playlistStore.targetPlatform"
+            @play-all="startQueue(0)"
+            @play-track="startQueue"
+          />
+          
+          <!-- Debug: Show if platform is missing -->
+          <div v-else class="error-card small">
+            <AlertTriangle class="error-icon small" />
+            <div class="error-text">
+                <h3>Target platform not found!</h3>
+                <p>This session is missing platform information.</p>
+            </div>
+          </div>
         </div>
       </div>
     
@@ -59,12 +70,13 @@
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue'
+import { onMounted, computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePlaylistStore } from '@/stores/playlist'
 import PlayableTrackList from '@/components/PlayableTrackList.vue'
 import QueuePlayer from '@/components/QueuePlayer.vue'
-import { ref } from 'vue'
+import ExportButton from '@/components/ExportButton.vue'
+import { Loader2, AlertCircle, Radio, AlertTriangle } from 'lucide-vue-next'
 
 const route = useRoute()
 const playlistStore = usePlaylistStore()
@@ -95,18 +107,6 @@ onMounted(async () => {
   if (code) {
     try {
       await playlistStore.loadSession(code)
-      
-      // Debug logging
-      console.log('🎵 Session loaded in JoinView')
-      console.log('   Tracks:', playlistStore.tracks.length)
-      console.log('   Target Platform:', playlistStore.targetPlatform)
-      console.log('   Source Platform:', playlistStore.sourcePlatform)
-      
-      // Log first track structure
-      if (playlistStore.tracks.length > 0) {
-        console.log('   First track keys:', Object.keys(playlistStore.tracks[0]))
-      }
-      
     } catch (err) {
       console.error('Failed to load session:', err)
     }
@@ -114,11 +114,11 @@ onMounted(async () => {
 })
 </script>
 
-
 <style scoped>
 .join-view {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* Dark textured background */
+  background-color: var(--mantine-color-dark-7);
   padding: 40px 20px;
 }
 
@@ -128,62 +128,106 @@ onMounted(async () => {
 }
 
 .title {
-  font-size: 3rem;
-  color: white;
-  text-align: center;
-  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 2.5rem;
+  color: var(--mantine-color-gray-0);
+  margin-bottom: 30px;
 }
 
-.loading {
-  text-align: center;
-  color: white;
-  padding: 60px 20px;
+.title-icon {
+  width: 40px;
+  height: 40px;
+  color: var(--mantine-color-grape-9);
 }
 
-.spinner {
-  width: 60px;
-  height: 60px;
-  border: 5px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: var(--mantine-color-gray-5);
+}
+
+.spinner-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--mantine-color-grape-7);
   animation: spin 1s linear infinite;
-  margin: 0 auto 20px;
+  margin-bottom: 16px;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-.error {
-  background: white;
+.error-card {
+  background: var(--mantine-color-dark-6);
   padding: 40px;
-  border-radius: 16px;
+  border-radius: 8px;
   text-align: center;
+  border: 1px solid #ff6b6b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.error-card.small {
+  flex-direction: row;
+  padding: 24px;
+  gap: 16px;
+  border-color: #fab005; /* Warning color */
+}
+
+.error-icon {
+  width: 48px;
+  height: 48px;
+  color: #ff6b6b; /* Red */
+  margin-bottom: 16px;
+}
+
+.error-icon.small {
+    width: 24px;
+    height: 24px;
+    color: #fab005;
+    margin-bottom: 0;
+}
+
+.error-text {
+    text-align: left;
+}
+
+.error-text h3 {
+    margin: 0;
+    color: #fab005;
 }
 
 .error h2 {
-  color: #c33;
+  color: #ff6b6b;
   margin-bottom: 15px;
 }
 
 .error p {
-  color: #666;
+  color: var(--mantine-color-gray-5);
   margin-bottom: 25px;
 }
 
 .home-button {
   display: inline-block;
-  padding: 15px 30px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 12px 24px;
+  background: var(--mantine-color-grape-9);
   color: white;
   text-decoration: none;
-  border-radius: 12px;
+  border-radius: 4px;
   font-weight: 600;
-  transition: transform 0.2s;
+  transition: background-color 0.2s;
 }
 
 .home-button:hover {
-  transform: translateY(-2px);
+  background: var(--mantine-color-grape-7);
 }
 
 .results {
@@ -191,12 +235,13 @@ onMounted(async () => {
 }
 
 .stats-summary {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  padding: 15px;
-  border-radius: 12px;
+  background: rgba(134, 46, 156, 0.1);
+  color: var(--mantine-color-gray-0);
+  padding: 16px;
+  border-radius: 8px;
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(134, 46, 156, 0.2);
 }
 
 .stats-summary p {
@@ -205,6 +250,12 @@ onMounted(async () => {
 }
 
 .stats-summary strong {
-  color: #ffd700;
+  color: var(--mantine-color-grape-7);
+}
+
+.actions-bar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
 }
 </style>

@@ -60,7 +60,7 @@ class SessionResponse(BaseModel):
 @app.get("/")
 async def root():
     return {
-        "message": "AuxParty API - Share music across any platform! 🎵",
+        "message": "AuxParty API - Share music across any platform!",
         "version": "2.0",
         "features": ["Spotify", "YouTube Music", "Apple Music (FREE)"],
         "note": "Apple Music integration uses free iTunes Search API"
@@ -188,6 +188,123 @@ async def get_session_ttl(code: str):
         "ttl_hours": round(ttl / 3600, 1),
         "expires_in": f"{ttl // 3600}h {(ttl % 3600) // 60}m"
     }
+
+from auth import SpotifyAuth
+from fastapi.responses import RedirectResponse
+
+# ... existing imports ...
+
+# Models
+class ExportRequest(BaseModel):
+    session_code: str
+    target_platform: str
+    access_token: str
+    playlist_name: Optional[str] = "AuxParty Session"
+
+@app.get("/api/auth/login")
+async def login_spotify():
+    """Redirect to Spotify Login"""
+    auth_url = SpotifyAuth.get_auth_url()
+    return {"url": auth_url}
+
+@app.get("/api/auth/callback")
+async def callback_spotify(code: str):
+    """
+    Exchange code for token and redirect context to frontend
+    """
+    try:
+        token_data = SpotifyAuth.exchange_code(code)
+        access_token = token_data['access_token']
+        # Redirect to frontend with token
+        return RedirectResponse(url=f"http://localhost:5173/callback?token={access_token}")
+    except Exception as e:
+        return RedirectResponse(url=f"http://localhost:5173/callback?error={str(e)}")
+
+@app.post("/api/export")
+async def export_playlist(request: ExportRequest):
+    """Export session to a real playlist"""
+    try:
+        # 1. Get Session
+        session = session_manager.get_session(request.session_code)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+            
+        tracks = session['tracks']
+        
+        # 2. Get Platform Handler
+        if request.target_platform != 'spotify':
+            raise HTTPException(status_code=400, detail="Only Spotify export is supported currently")
+            
+        platform = detector.get_platform('spotify')
+        
+        # 3. Create Playlist
+        playlist_id = platform.create_playlist(
+            request.access_token, 
+            request.playlist_name,
+            "Created with AuxParty 🎵"
+        )
+        
+        # 4. Search & Add Tracks
+        track_uris = []
+        for track in tracks:
+            # We need the Spotify URI. If we already matched it, we might have an ID
+            # But the track object structure depends on the conversion result
+            # We'll assume we need to search or use the ID if it was a direct spotify match
+            
+            uri = None
+            if track.get('id'): # If we have a spotify ID
+                 uri = f"spotify:track:{track['id']}"
+            
+            # If we don't have a direct ID (e.g. from YouTube), we should search
+            if not uri:
+                # Reuse the search logic? 
+                # Ideally we should have stored the Spotify ID during conversion IF target was Spotify
+                # But if target was Apple Music, we don't have Spotify IDs.
+                # So we might need to search again here if IDs are missing.
+                pass
+            
+            if uri:
+                track_uris.append(uri)
+                
+        # For now, let's assume the tracks HAVE ids from the conversion if the target was spotify.
+        # If the playlist was converted to 'spotify', the tracks list should contain spotify IDs.
+        
+        # But wait, 'session['tracks']' contains the RESULT of the conversion.
+        # If the user converted TO Spotify, the tracks have spotify metadata.
+        # If they converted TO Apple Music, they have Apple metadata.
+        
+        # IF we want to export to Spotify but the current session is Apple Music...
+        # We technically need to RE-MATCH everything to Spotify.
+        # That's a bit complex.
+        
+        # Simplified approach: Only allow export to the TARGET platform of the session.
+        # Or, perform a quick re-match loop here.
+        
+        real_uris = []
+        for track in tracks:
+            # If we have a spotify ID, use it
+            if session.get('target_platform') == 'spotify' and track.get('id'):
+                real_uris.append(f"spotify:track:{track['id']}")
+                continue
+                
+            # Otherwise, quick search
+            result = platform.search_by_metadata(track['title'], track['artist'])
+            if result and result.get('id'):
+                real_uris.append(f"spotify:track:{result['id']}")
+        
+        # 5. Add to Playlist
+        if real_uris:
+            platform.add_tracks_to_playlist(request.access_token, playlist_id, real_uris)
+            
+        return {
+            "success": True,
+            "playlist_url": f"https://open.spotify.com/playlist/{playlist_id}",
+            "tracks_added": len(real_uris)
+        }
+        
+    except Exception as e:
+        print(f"Export failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/health")
 async def health_check():

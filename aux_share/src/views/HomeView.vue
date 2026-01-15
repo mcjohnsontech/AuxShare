@@ -1,27 +1,29 @@
-<!-- src/views/HomeView.vue -->
-
 <template>
   <div class="home">
-    <PlaylistInput @converted="handleConverted" />
-    
-    <div v-if="playlistStore.sessionCode" class="results-container">
-      <ShareLink 
-        :code="playlistStore.sessionCode"
-        :share-url="playlistStore.shareUrl"
-      />
+    <div class="container">
+      <PlaylistInput @converted="handleConverted" />
       
-      <MatchStats :stats="playlistStore.stats" />
-      
-      <!-- Show detailed matching stats for the creator -->
-      <TrackList 
-        v-if="showDetails"
-        :tracks="sessionTracks"
-        :target-platform="playlistStore.targetPlatform || 'youtube_music'"
-      />
-      
-      <button @click="showDetails = !showDetails" class="toggle-details">
-        {{ showDetails ? '🔼 Hide Details' : '🔽 Show Details' }}
-      </button>
+      <div v-if="playlistStore.sessionCode" class="results-container">
+        <ShareLink 
+          :code="playlistStore.sessionCode"
+          :share-url="playlistStore.shareUrl"
+        />
+        
+        <MatchStats :stats="playlistStore.stats" />
+        
+        <!-- Show detailed matching stats for the creator -->
+        <TrackList 
+          v-if="showDetails"
+          :tracks="sessionTracks"
+          :target-platform="playlistStore.targetPlatform || 'youtube_music'"
+        />
+        
+        <button @click="showDetails = !showDetails" class="toggle-details">
+          <ChevronUp v-if="showDetails" class="icon" />
+          <ChevronDown v-else class="icon" />
+          {{ showDetails ? 'Hide Details' : 'Show Details' }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -33,6 +35,7 @@ import PlaylistInput from '@/components/PlaylistInput.vue'
 import ShareLink from '@/components/ShareLink.vue'
 import MatchStats from '@/components/MatchStats.vue'
 import TrackList from '@/components/TrackList.vue'
+import { ChevronDown, ChevronUp } from 'lucide-vue-next'
 
 const playlistStore = usePlaylistStore()
 const showDetails = ref(false)
@@ -67,8 +70,13 @@ async function handleConverted() {
 <style scoped>
 .home {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-color: var(--mantine-color-dark-7);
   padding: 40px 20px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 .results-container {
@@ -77,21 +85,28 @@ async function handleConverted() {
 }
 
 .toggle-details {
-  display: block;
-  margin: 20px auto;
-  padding: 12px 24px;
-  background: white;
-  color: #667eea;
-  border: 2px solid white;
-  border-radius: 12px;
-  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 24px auto;
+  padding: 10px 20px;
+  background: var(--mantine-color-dark-6);
+  color: var(--mantine-color-grape-9);
+  border: 1px solid var(--mantine-color-grape-9);
+  border-radius: 4px;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s;
 }
 
 .toggle-details:hover {
-  background: transparent;
-  color: white;
+  background: rgba(134, 46, 156, 0.1);
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
 }
 </style>

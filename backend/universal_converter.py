@@ -33,9 +33,9 @@ class UniversalConverter:
         # Step 2: Check if source platform can be extracted
         if not source_platform_info['can_extract']:
             raise ValueError(
-                f"❌ {source_platform_info['display_name']} playlists cannot be used as source with free API.\n"
-                f"💡 Supported sources: Spotify, YouTube Music\n"
-                f"   You can still convert TO {source_platform_info['display_name']}!"
+                f"Error: {source_platform_info['display_name']} playlists cannot be used as source with free API.\n"
+                f"Supported sources: Spotify, YouTube Music\n"
+                f"You can still convert TO {source_platform_info['display_name']}!"
             )
         
         source_platform = source_platform_info['handler']
@@ -45,7 +45,7 @@ class UniversalConverter:
         if not target_platform:
             raise ValueError(f"Unsupported target platform: {target_platform_name}")
         
-        print(f"🔄 Converting from {source_platform_info['display_name']} to {target_platform.name}")
+        print(f"Converting from {source_platform_info['display_name']} to {target_platform.name}")
         
         # Step 4: Extract playlist from source
         playlist_id = source_platform.extract_playlist_id(source_url)
@@ -53,7 +53,7 @@ class UniversalConverter:
             raise ValueError("Could not extract playlist ID from URL")
         
         source_tracks = source_platform.get_playlist_tracks(playlist_id)
-        print(f"📥 Found {len(source_tracks)} tracks")
+        print(f"Found {len(source_tracks)} tracks")
         
         if not source_tracks:
             raise ValueError("Playlist is empty or could not be fetched")
