@@ -42,3 +42,7 @@ aux_share/logs/*.log.*.*.*.*.*
 aux_share/logs/*.log.*.*.*.*.*.*
 
 backend/__pycache__
+.secret_encryption_key
+backend/.secret_encryption_key
+*.sqlite
+backend/*.sqlite

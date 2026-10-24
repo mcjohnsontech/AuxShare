@@ -9,7 +9,6 @@
       <span>Creating Playlist...</span>
     </div>
     <div v-else class="content">
-      <!-- <img src="@/assets/spotify-icon-white.png" class="icon-img" v-if="hasIcon" /> -->
       <span>Export to Spotify</span>
     </div>
   </button>
@@ -23,6 +22,7 @@
 import { ref } from 'vue'
 import { Loader2 } from 'lucide-vue-next'
 import { usePlaylistStore } from '@/stores/playlist'
+import { API_BASE_URL } from '@/services/api'
 
 const props = defineProps({
   sessionCode: {
@@ -35,55 +35,56 @@ const playlistStore = usePlaylistStore()
 const isExporting = ref(false)
 const statusMessage = ref('')
 const statusType = ref('info')
-const hasIcon = ref(false) // Placeholder until we verify asset
+
+async function initiateLogin() {
+  localStorage.setItem('auth_return_path', window.location.pathname)
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      credentials: 'include'
+    })
+    const data = await res.json()
+    if (data.url) {
+      window.location.href = data.url
+    } else {
+      throw new Error("Missing auth URL")
+    }
+  } catch (e) {
+    console.error(e)
+    statusMessage.value = "Failed to start Spotify login"
+    statusType.value = "error"
+  }
+}
 
 async function handleExport() {
-  const token = localStorage.getItem('spotify_access_token')
+  // Purge any legacy token from localStorage
+  localStorage.removeItem('spotify_access_token')
   
-  if (!token) {
-    // Start Auth Flow
-    // Save current path to return to
-    localStorage.setItem('auth_return_path', window.location.pathname)
-    
-    // Get Auth URL from backend
-    try {
-      const res = await fetch('http://localhost:8000/api/auth/login')
-      const data = await res.json()
-      window.location.href = data.url
-    } catch (e) {
-      console.error(e)
-      statusMessage.value = "Failed to start login"
-      statusType.value = "error"
-    }
-    return
-  }
-  
-  // Have token, try export
   isExporting.value = true
   statusMessage.value = "Creating your playlist..."
   statusType.value = "info"
   
   try {
-    const res = await fetch('http://localhost:8000/api/export', {
+    const res = await fetch(`${API_BASE_URL}/api/export`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({
         session_code: props.sessionCode,
-        target_platform: 'spotify',
-        access_token: token
+        target_platform: 'spotify'
       })
     })
     
+    if (res.status === 401) {
+      // Not authenticated or token expired - initiate PKCE OAuth flow
+      statusMessage.value = "Connecting to Spotify..."
+      statusType.value = "info"
+      await initiateLogin()
+      return
+    }
+    
     if (!res.ok) {
-      if (res.status === 401) {
-        // Token expired? Clear and retry (simple recursive logic or just ask user)
-        localStorage.removeItem('spotify_access_token')
-        statusMessage.value = "Session expired. Please click again to re-login."
-        statusType.value = "error"
-        isExporting.value = false
-        return
-      }
-      throw new Error("Export failed")
+      const errData = await res.json().catch(() => ({}))
+      throw new Error(errData.detail || "Export failed")
     }
     
     const data = await res.json()
@@ -91,11 +92,13 @@ async function handleExport() {
     statusType.value = "success"
     
     // Open the new playlist
-    window.open(data.playlist_url, '_blank')
+    if (data.playlist_url) {
+      window.open(data.playlist_url, '_blank')
+    }
     
   } catch (e) {
     console.error(e)
-    statusMessage.value = "Failed to create playlist."
+    statusMessage.value = e.message || "Failed to create playlist."
     statusType.value = "error"
   } finally {
     isExporting.value = false
@@ -109,7 +112,7 @@ async function handleExport() {
   color: white;
   border: none;
   padding: 12px 24px;
-  border-radius: 50px; /* Pill shape */
+  border-radius: 50px;
   font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
@@ -139,12 +142,6 @@ async function handleExport() {
 .icon {
   width: 20px;
   height: 20px;
-}
-
-.icon-img {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
 }
 
 .spin {

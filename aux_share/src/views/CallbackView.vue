@@ -12,21 +12,18 @@
 import { onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Loader2 } from 'lucide-vue-next'
-import { usePlaylistStore } from '@/stores/playlist'
 
 const router = useRouter()
 const route = useRoute()
-const playlistStore = usePlaylistStore()
 
 onMounted(() => {
-  const token = route.query.token
+  // Clear any legacy plaintext token stored in localStorage for security
+  localStorage.removeItem('spotify_access_token')
+  
+  const status = route.query.status
   const error = route.query.error
   
-  if (token) {
-    // Save token
-    localStorage.setItem('spotify_access_token', token)
-    
-    // Check for return path
+  if (status === 'success' || route.query.token) {
     const returnPath = localStorage.getItem('auth_return_path')
     if (returnPath) {
       localStorage.removeItem('auth_return_path')
@@ -36,7 +33,8 @@ onMounted(() => {
     }
   } else if (error) {
     console.error('Auth error:', error)
-    // Handle error (maybe redirect to home with error params)
+    router.push('/?auth_error=' + encodeURIComponent(error))
+  } else {
     router.push('/')
   }
 })

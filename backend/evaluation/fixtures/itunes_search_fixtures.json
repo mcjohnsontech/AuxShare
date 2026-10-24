@@ -1,0 +1,31 @@
+{
+  "Blinding Lights The Weeknd": {
+    "resultCount": 1,
+    "results": [
+      {
+        "trackId": 1499378607,
+        "trackName": "Blinding Lights",
+        "artistName": "The Weeknd",
+        "collectionName": "After Hours",
+        "trackTimeMillis": 200040,
+        "trackViewUrl": "https://music.apple.com/us/album/blinding-lights/1499378108?i=1499378607",
+        "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/blinding_lights.m4a"
+      }
+    ]
+  },
+  "As It Was Harry Styles": {
+    "resultCount": 1,
+    "results": [
+      {
+        "trackId": 1615585008,
+        "trackName": "As It Was",
+        "artistName": "Harry Styles",
+        "collectionName": "Harry's House",
+        "trackTimeMillis": 167303,
+        "trackViewUrl": "https://music.apple.com/us/album/as-it-was/1615584999?i=1615585008",
+        "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview125/v4/as_it_was.m4a"
+      }
+    ]
+  }
+}
+

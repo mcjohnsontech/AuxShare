@@ -1,20 +1,19 @@
 
 from dotenv import load_dotenv
-import os 
-import spotipy 
+import os
+import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 # Load environment variables from .env file
 
 load_dotenv()
-print("SPOTIPY_CLIENT_ID:", os.getenv("SPOTIPY_CLIENT_ID"))
-print("SPOTIPY_CLIENT_SECRET:", "SET" if os.getenv("SPOTIPY_CLIENT_SECRET") else "MISSING")
 
-class SpotifyClient: 
+
+class SpotifyClient:
     def __init__(self):
         """Initialize the Spotify client with credentials from environment variables."""
         client_id = os.getenv("SPOTIPY_CLIENT_ID")
         client_secret = os.getenv("SPOTIPY_CLIENT_SECRET")
-        
+
         # Client Credentials Flow (No user authorization required)
         auth_manager = SpotifyClientCredentials(
             client_id=client_id,
@@ -40,24 +39,43 @@ class SpotifyClient:
 
     def get_playlist_tracks(self, playlist_id):
         """Fetch all tracks from a playlist"""
-        results = self.sp.playlist_tracks(playlist_id)
+        try:
+            results = self.sp.playlist_tracks(playlist_id)
+        except Exception as e:
+            error_msg = str(e)
+            # Spotipy wraps HTTP errors; check for 404 / not found
+            if "404" in error_msg or "not found" in error_msg.lower() or "Resource not found" in error_msg:
+                raise ValueError(
+                    "This Spotify playlist could not be accessed. "
+                    "It may be private, region-restricted, or an editorial/algorithmic playlist "
+                    "that isn't accessible with this API. Try a user-created playlist or a different source."
+                )
+            raise
         tracks = []
 
-        while results: 
+        while results:
             for item in results['items']:
-                track = item['track']
-                if track: 
-                    tracks.append({
-                        'title': track['name'],
-                        'artists': track['artists'][0]['name'],
-                        'album': track['album']['name'],
-                        'isrc': track['external_ids'].get('isrc'),
-                        'spotify_id': track['id'],
-                        'duration_ms': track['duration_ms'] 
-                    })
+                track = item.get('track') if isinstance(item, dict) else None
+                if track:
+                    try:
+                        artist = track['artists'][0]['name']
+                        tracks.append({
+                            'title': track['name'],
+                            'artist': artist,
+                            'artists': artist,
+                            'album': track['album']['name'],
+                            'isrc': track.get('external_ids', {}).get('isrc') if isinstance(track.get('external_ids'), dict) else None,
+                            'spotify_id': track['id'],
+                            'duration_ms': track['duration_ms']
+                        })
+                    except Exception:
+                        continue
 
             # FIX: This must be OUTSIDE the 'for' loop, but inside the 'while' loop
-            results = self.sp.next(results) if results['next'] else None
+            try:
+                results = self.sp.next(results) if results and results.get('next') else None
+            except Exception:
+                break
 
         return tracks
         # Testing 

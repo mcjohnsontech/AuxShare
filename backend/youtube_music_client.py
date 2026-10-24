@@ -8,6 +8,47 @@ class YouTubeMusicClient:
         """Initialize YouTube Music client"""
         # No authentication needed for search!
         self.ytmusic = YTMusic()
+
+    @staticmethod
+    def _parse_duration_ms(result):
+        seconds = result.get('duration_seconds')
+        if not seconds and result.get('duration'):
+            duration = str(result['duration'])
+            try:
+                parts = [int(part) for part in duration.split(':')]
+                seconds = 0
+                for part in parts:
+                    seconds = seconds * 60 + part
+            except (TypeError, ValueError):
+                seconds = None
+        return int(seconds * 1000) if seconds else None
+
+    def search_candidates(self, title, artist, limit=10):
+        """Return several search results so the matcher can rank them."""
+        query = f"{title} {artist}".strip()
+        results = self.ytmusic.search(query, filter='songs', limit=limit) or []
+
+        candidates = []
+        for result in results:
+            video_id = result.get('videoId')
+            if not video_id:
+                continue
+            artists = [
+                item.get('name')
+                for item in result.get('artists', [])
+                if isinstance(item, dict) and item.get('name')
+            ]
+            album = result.get('album') or {}
+            candidates.append({
+                'id': video_id,
+                'title': result.get('title', ''),
+                'artists': artists,
+                'album': album.get('name', '') if isinstance(album, dict) else '',
+                'duration_ms': self._parse_duration_ms(result),
+                'url': f"https://music.youtube.com/watch?v={video_id}",
+                'raw': result,
+            })
+        return candidates
     
     def search_track(self, title, artist):
         """Search for a track on YouTube Music"""

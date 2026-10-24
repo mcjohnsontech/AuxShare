@@ -1,0 +1,283 @@
+{
+  "Blinding Lights The Weeknd": [
+    {
+      "videoId": "yt_blinding_lights",
+      "title": "Blinding Lights",
+      "artists": [{"name": "The Weeknd"}],
+      "album": {"name": "After Hours"},
+      "duration_seconds": 200
+    }
+  ],
+  "As It Was Harry Styles": [
+    {
+      "videoId": "yt_as_it_was",
+      "title": "As It Was",
+      "artists": [{"name": "Harry Styles"}],
+      "album": {"name": "Harry's House"},
+      "duration_seconds": 167
+    }
+  ],
+  "bad guy Billie Eilish": [
+    {
+      "videoId": "yt_bad_guy",
+      "title": "bad guy",
+      "artists": [{"name": "Billie Eilish"}],
+      "album": {"name": "WHEN WE ALL FALL ASLEEP, WHERE DO WE GO?"},
+      "duration_seconds": 194
+    }
+  ],
+  "Levitating (feat. DaBaby) Dua Lipa": [
+    {
+      "videoId": "yt_levitating_dababy",
+      "title": "Levitating (feat. DaBaby)",
+      "artists": [{"name": "Dua Lipa"}],
+      "album": {"name": "Future Nostalgia"},
+      "duration_seconds": 203
+    }
+  ],
+  "STAY (with Justin Bieber) The Kid LAROI": [
+    {
+      "videoId": "yt_stay_laroi",
+      "title": "STAY (with Justin Bieber)",
+      "artists": [{"name": "The Kid LAROI"}],
+      "album": {"name": "F*CK LOVE 3: OVERKILL"},
+      "duration_seconds": 141
+    }
+  ],
+  "Anti-Hero Taylor Swift": [
+    {
+      "videoId": "yt_anti_hero",
+      "title": "Anti-Hero",
+      "artists": [{"name": "Taylor Swift"}],
+      "album": {"name": "Midnights"},
+      "duration_seconds": 200
+    }
+  ],
+  "Save Your Tears The Weeknd": [
+    {
+      "videoId": "yt_save_your_tears",
+      "title": "Save Your Tears",
+      "artists": [{"name": "The Weeknd"}],
+      "album": {"name": "After Hours"},
+      "duration_seconds": 215
+    }
+  ],
+  "INDUSTRY BABY (feat. Jack Harlow) Lil Nas X": [
+    {
+      "videoId": "yt_industry_baby",
+      "title": "INDUSTRY BABY (feat. Jack Harlow)",
+      "artists": [{"name": "Lil Nas X"}],
+      "album": {"name": "MONTERO"},
+      "duration_seconds": 212
+    }
+  ],
+  "Heat Waves Glass Animals": [
+    {
+      "videoId": "yt_heat_waves",
+      "title": "Heat Waves",
+      "artists": [{"name": "Glass Animals"}],
+      "album": {"name": "Dreamland"},
+      "duration_seconds": 238
+    }
+  ],
+  "Starboy The Weeknd": [
+    {
+      "videoId": "yt_starboy",
+      "title": "Starboy",
+      "artists": [{"name": "The Weeknd"}],
+      "album": {"name": "Starboy"},
+      "duration_seconds": 230
+    }
+  ],
+  "Hey Jude - 2015 Remaster The Beatles": [
+    {
+      "videoId": "yt_hey_jude_2015",
+      "title": "Hey Jude (Remastered 2015)",
+      "artists": [{"name": "The Beatles"}],
+      "album": {"name": "1"},
+      "duration_seconds": 425
+    }
+  ],
+  "Comfortably Numb - 2011 Remastered Version Pink Floyd": [
+    {
+      "videoId": "yt_comfortably_numb_2011",
+      "title": "Comfortably Numb (2011 Remastered Version)",
+      "artists": [{"name": "Pink Floyd"}],
+      "album": {"name": "The Wall"},
+      "duration_seconds": 382
+    }
+  ],
+  "Stairway to Heaven - Remaster Led Zeppelin": [
+    {
+      "videoId": "yt_stairway_to_heaven",
+      "title": "Stairway to Heaven (Remaster)",
+      "artists": [{"name": "Led Zeppelin"}],
+      "album": {"name": "Led Zeppelin IV"},
+      "duration_seconds": 482
+    }
+  ],
+  "Bohemian Rhapsody - 2011 Mix Queen": [
+    {
+      "videoId": "yt_bohemian_rhapsody_2011",
+      "title": "Bohemian Rhapsody (2011 Mix)",
+      "artists": [{"name": "Queen"}],
+      "album": {"name": "A Night At The Opera"},
+      "duration_seconds": 354
+    }
+  ],
+  "Hotel California - 2013 Remaster Eagles": [
+    {
+      "videoId": "yt_hotel_california_studio",
+      "title": "Hotel California (2013 Remaster)",
+      "artists": [{"name": "Eagles"}],
+      "album": {"name": "Hotel California"},
+      "duration_seconds": 391
+    }
+  ],
+  "So What Miles Davis": [
+    {
+      "videoId": "yt_so_what",
+      "title": "So What",
+      "artists": [{"name": "Miles Davis"}],
+      "album": {"name": "Kind of Blue"},
+      "duration_seconds": 565
+    }
+  ],
+  "Time - 2023 Remaster Pink Floyd": [
+    {
+      "videoId": "yt_time_pink_floyd",
+      "title": "Time (2023 Remaster)",
+      "artists": [{"name": "Pink Floyd"}],
+      "album": {"name": "The Dark Side of the Moon"},
+      "duration_seconds": 425
+    }
+  ],
+  "\"Heroes\" - 2017 Remaster David Bowie": [
+    {
+      "videoId": "yt_heroes_bowie",
+      "title": "\"Heroes\" (2017 Remaster)",
+      "artists": [{"name": "David Bowie"}],
+      "album": {"name": "\"Heroes\""},
+      "duration_seconds": 371
+    }
+  ],
+  "夜に駆ける YOASOBI": [
+    {
+      "videoId": "yt_yoru_ni_kakeru",
+      "title": "夜に駆ける",
+      "artists": [{"name": "YOASOBI"}],
+      "album": {"name": "THE BOOK"},
+      "duration_seconds": 261
+    }
+  ],
+  "봄날 방탄소년단": [
+    {
+      "videoId": "yt_spring_day_romanized",
+      "title": "Spring Day",
+      "artists": [{"name": "BTS"}],
+      "album": {"name": "YOU NEVER WALK ALONE"},
+      "duration_seconds": 274
+    }
+  ],
+  "Группа крови Кино": [
+    {
+      "videoId": "yt_gruppa_krovi",
+      "title": "Группа крови",
+      "artists": [{"name": "Кино"}],
+      "album": {"name": "Группа крови"},
+      "duration_seconds": 285
+    }
+  ],
+  "تملي معاك عمرو دياب": [
+    {
+      "videoId": "yt_tamally_maak_rom",
+      "title": "Tamally Maak",
+      "artists": [{"name": "Amr Diab"}],
+      "album": {"name": "Tamally Maak"},
+      "duration_seconds": 269
+    }
+  ],
+  "Despacito Luis Fonsi, Daddy Yankee": [
+    {
+      "videoId": "yt_despacito",
+      "title": "Despacito",
+      "artists": [{"name": "Luis Fonsi"}],
+      "album": {"name": "VIDA"},
+      "duration_seconds": 228
+    }
+  ],
+  "怪物 YOASOBI": [
+    {
+      "videoId": "yt_kaibutsu_yoasobi",
+      "title": "Monster (怪物)",
+      "artists": [{"name": "YOASOBI"}],
+      "album": {"name": "THE BOOK 2"},
+      "duration_seconds": 205
+    }
+  ],
+  "Dynamite BTS": [
+    {
+      "videoId": "yt_dynamite_bts",
+      "title": "Dynamite",
+      "artists": [{"name": "BTS"}],
+      "album": {"name": "BE"},
+      "duration_seconds": 199
+    }
+  ],
+  "Hotel California - Live On MTV, 1994 Eagles": [
+    {
+      "videoId": "yt_hotel_california_live",
+      "title": "Hotel California (Live On MTV, 1994)",
+      "artists": [{"name": "Eagles"}],
+      "album": {"name": "Hell Freezes Over"},
+      "duration_seconds": 432
+    }
+  ],
+  "Levitating (The Blessed Madonna Remix) Dua Lipa": [
+    {
+      "videoId": "yt_levitating_remix",
+      "title": "Levitating (The Blessed Madonna Remix)",
+      "artists": [{"name": "Dua Lipa"}],
+      "album": {"name": "Club Future Nostalgia"},
+      "duration_seconds": 250
+    }
+  ],
+  "Hurt Johnny Cash": [
+    {
+      "videoId": "yt_hurt_cash",
+      "title": "Hurt",
+      "artists": [{"name": "Johnny Cash"}],
+      "album": {"name": "American IV: The Man Comes Around"},
+      "duration_seconds": 218
+    }
+  ],
+  "Creep - Acoustic Radiohead": [
+    {
+      "videoId": "yt_creep_acoustic",
+      "title": "Creep (Acoustic)",
+      "artists": [{"name": "Radiohead"}],
+      "album": {"name": "My Iron Lung EP"},
+      "duration_seconds": 259
+    }
+  ],
+  "Smells Like Teen Spirit - Sped Up Nirvana": [
+    {
+      "videoId": "yt_smells_like_teen_spirit_studio",
+      "title": "Smells Like Teen Spirit",
+      "artists": [{"name": "Nirvana"}],
+      "album": {"name": "Nevermind"},
+      "duration_seconds": 301
+    }
+  ],
+  "Completely Nonexistent Song XYZ123987 Ghost Band 999": [],
+  "Bohemian Rhapsody - Karaoke Version Ameritz Karaoke": [
+    {
+      "videoId": "yt_bohemian_rhapsody_original",
+      "title": "Bohemian Rhapsody",
+      "artists": [{"name": "Queen"}],
+      "album": {"name": "A Night At The Opera"},
+      "duration_seconds": 354
+    }
+  ]
+}
+

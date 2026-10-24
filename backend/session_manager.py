@@ -4,22 +4,24 @@ import redis
 import json
 import secrets
 import time
+import os
 from typing import List, Dict, Optional
 
 class SessionManager:
     def __init__(self):
         """Initialize Redis connection"""
         self.redis_client = redis.Redis(
-            host='localhost',
-            port=6379,
-            db=0,
+            host=os.getenv('REDIS_HOST', 'localhost'),
+            port=int(os.getenv('REDIS_PORT', '6379')),
+            db=int(os.getenv('REDIS_DB', '0')),
             decode_responses=True  # Automatically decode bytes to strings
         )
     
     def generate_code(self) -> str:
-        """Generate a unique 4-digit code"""
+        """Generate a cryptographically secure, high-entropy unique session ID"""
         while True:
-            code = str(secrets.randbelow(9000) + 1000)  # 1000-9999
+            # Generate 16 bytes of entropy (approx 22 urlsafe characters)
+            code = secrets.token_urlsafe(16)
             
             # Check if code already exists
             if not self.redis_client.exists(f"playlist:{code}"):
