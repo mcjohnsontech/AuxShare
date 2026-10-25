@@ -1,9 +1,15 @@
 import axios from 'axios'
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// In Docker the app is served by nginx, which proxies /api to the backend, so
+// the base URL is intentionally empty (relative requests). In local dev
+// (npm run dev) it falls back to the backend on port 8000.
+const configuredBase = import.meta.env.VITE_API_URL
+export const API_BASE_URL =
+  configuredBase === undefined ? 'http://localhost:8000' : configuredBase.replace(/\/+$/, '')
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
   },

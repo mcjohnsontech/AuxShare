@@ -32,6 +32,25 @@ def get_redirect_uri() -> str:
     backend_url = os.getenv("BACKEND_URL", "http://127.0.0.1:8000").rstrip("/")
     return f"{backend_url}/api/auth/callback"
 
+
+def get_public_backend_url() -> str:
+    """Public origin of this API, as the browser must reach it directly.
+
+    OAuth state is bound to a cookie, and cookies are origin-scoped. The login
+    must therefore begin on the same origin that Spotify will redirect back to,
+    otherwise the callback cannot present the cookie that the state is bound to.
+    """
+    explicit = os.getenv("PUBLIC_BACKEND_URL")
+    if explicit:
+        return explicit.rstrip("/")
+
+    redirect_uri = get_redirect_uri()
+    parsed = urllib.parse.urlparse(redirect_uri)
+    if parsed.scheme and parsed.netloc:
+        return f"{parsed.scheme}://{parsed.netloc}"
+
+    return os.getenv("BACKEND_URL", "http://127.0.0.1:8000").rstrip("/")
+
 class SpotifyAuth:
     session_manager = SecureSessionManager()
 
@@ -77,9 +96,16 @@ class SpotifyAuth:
         pending = cls.session_manager.consume_oauth_pending_state(state)
         if not pending:
             raise HTTPException(status_code=400, detail="Invalid or expired OAuth state parameter.")
-        
-        # Verify session binding if session_id is available
-        if pending.get("session_id") and session_id and pending["session_id"] != session_id:
+
+        # The flow must be completed by the same browser that started it. Login
+        # is initiated on the backend origin (see /api/auth/start) precisely so
+        # that this cookie is available here; without that check an attacker
+        # could hand a victim an authorize URL and end up with the victim's
+        # Spotify tokens bound to the attacker's session.
+        pending_session_id = pending.get("session_id")
+        if not pending_session_id:
+            raise HTTPException(status_code=400, detail="OAuth state is not bound to a session.")
+        if not session_id or session_id != pending_session_id:
             raise HTTPException(status_code=400, detail="OAuth state does not match session.")
 
         code_verifier = pending.get("code_verifier")
@@ -117,7 +143,7 @@ class SpotifyAuth:
             raise HTTPException(status_code=400, detail="Spotify did not return an access token.")
 
         # 3. Encrypt and store tokens in session
-        effective_session_id = session_id or pending.get("session_id")
+        effective_session_id = pending_session_id
         cls.session_manager.store_user_tokens(
             session_id=effective_session_id,
             platform="spotify",

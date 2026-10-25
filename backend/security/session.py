@@ -81,6 +81,29 @@ class SecureSessionManager:
         except Exception:
             return None
 
+    # ---------------- OAuth Handoff ----------------
+
+    def store_auth_handoff(self, session_id: str, ttl: int = 180) -> str:
+        """Create a short-lived, single-use code that lets the frontend origin
+        adopt a session created on a different origin (e.g. the OAuth callback
+        host). Cookies are origin-scoped, so the callback cannot set a cookie
+        for the frontend; it hands off the session id instead."""
+        code = secrets.token_urlsafe(32)
+        self.redis.setex(f"auth_handoff:{code}", ttl, session_id)
+        return code
+
+    def consume_auth_handoff(self, code: str) -> Optional[str]:
+        """Atomically consume a handoff code, returning the session id once."""
+        if not code:
+            return None
+        key = f"auth_handoff:{code}"
+        pipe = self.redis.pipeline()
+        pipe.get(key)
+        pipe.delete(key)
+        results = pipe.execute()
+        session_id = results[0] if results else None
+        return session_id or None
+
     # ---------------- Encrypted Token Storage ----------------
 
     def store_user_tokens(

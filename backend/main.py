@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException, Request, Response, Depends
+from fastapi import FastAPI, HTTPException, Request, Response, Depends, logger
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -17,7 +17,7 @@ from redis.exceptions import RedisError
 from universal_converter import UniversalConverter
 from platform_detector import PlatformDetector
 from session_manager import SessionManager
-from auth import SpotifyAuth
+from auth import SpotifyAuth, get_redirect_uri, get_public_backend_url
 from security.csrf import default_csrf
 from security.session import SecureSessionManager, SESSION_COOKIE_NAME
 from security.redaction import SensitiveDataLogFilter, redact_sensitive_string
@@ -34,20 +34,34 @@ logging.getLogger().addFilter(SensitiveDataLogFilter())
 
 class _QueryParamRedactFilter(logging.Filter):
     """Strip `code=` and `state=` query params from access log lines."""
+
     _PATTERN = re.compile(r'([?&])(code|state)=[^&\s"\']+', re.IGNORECASE)
 
+    def _redact(self, value: str) -> str:
+        return self._PATTERN.sub(r'\1\2=[REDACTED]', value)
+
     def filter(self, record: logging.LogRecord) -> bool:
-        if record.args:
-            try:
+        try:
+            # uvicorn's AccessFormatter unpacks record.args as a 5-tuple
+            # (client_addr, method, full_path, http_version, status_code).
+            # Rewriting the message and emptying args breaks that unpacking,
+            # so redact the path in place instead.
+            if isinstance(record.args, tuple) and len(record.args) == 5:
+                client, method, path, http_version, status = record.args
+                if isinstance(path, str):
+                    record.args = (client, method, self._redact(path), http_version, status)
+                return True
+
+            if record.args:
                 msg = record.getMessage()
-                redacted = self._PATTERN.sub(r'\1\2=[REDACTED]', msg)
+                redacted = self._redact(msg)
                 if redacted != msg:
                     record.msg = redacted
                     record.args = ()
-            except Exception:
-                pass
-        else:
-            record.msg = self._PATTERN.sub(r'\1\2=[REDACTED]', str(record.msg))
+            else:
+                record.msg = self._redact(str(record.msg))
+        except Exception:
+            pass
         return True
 
 
@@ -353,6 +367,35 @@ async def get_session_ttl(code: str):
 
 # ----------------- Security: Authentication Endpoints -----------------
 
+@app.get("/api/config")
+async def client_config():
+    """Public configuration the browser needs (no secrets)."""
+    backend_url = get_public_backend_url()
+    return {
+        "backend_url": backend_url,
+        "auth_start_url": f"{backend_url}/api/auth/start",
+        "auth_callback_url": get_redirect_uri(),
+    }
+
+
+@app.get("/api/auth/start")
+async def start_spotify_auth(request: Request):
+    """Begin Spotify OAuth on the backend origin.
+
+    This endpoint is reached by a top-level browser navigation (not XHR) so the
+    session cookie is issued for the same origin Spotify will redirect back to.
+    That makes the state-to-session binding verifiable in the callback.
+    """
+    session_id = request.cookies.get(SESSION_COOKIE_NAME)
+    if not session_id or len(session_id) < 16:
+        session_id = secure_session.generate_session_id()
+
+    auth_data = SpotifyAuth.get_auth_url(session_id)
+    redirect_response = RedirectResponse(url=auth_data["url"], status_code=302)
+    secure_session.set_session_cookie(redirect_response, session_id)
+    return redirect_response
+
+
 @app.get("/api/auth/login")
 async def login_spotify(request: Request, response: Response):
     """
@@ -394,19 +437,69 @@ async def callback_spotify(request: Request, code: Optional[str] = None, state: 
         new_session_id = secure_session.generate_session_id()
         SpotifyAuth.session_manager.migrate_session(old_stored_session, new_session_id)
 
+        # The callback usually runs on the backend origin (e.g.
+        # http://127.0.0.1:8000) while the app lives on another origin
+        # (e.g. http://localhost:5173). Cookies are origin-scoped, so a cookie
+        # set here would never be sent by the frontend. Issue a single-use
+        # handoff code and let the frontend exchange it on its own origin.
+        handoff_code = secure_session.store_auth_handoff(new_session_id)
+
         redirect_response = RedirectResponse(
-            url=f"{frontend_url}/callback?status=success",
+            url=f"{frontend_url}/callback?status=success&handoff={urllib.parse.quote(handoff_code)}",
             status_code=303
         )
+        # Also set the cookie for the (rare) same-origin deployment.
         secure_session.set_session_cookie(redirect_response, new_session_id)
         return redirect_response
 
+
     except Exception as e:
-        err_msg = redact_sensitive_string(str(e))
+        logger = logging.getLogger(__name__)
+        logger.exception("Spotify OAuth callback failed: %s", type(e).__name__)
+
+        # Surface the actionable reasons; keep anything else generic so we never
+        # leak internals or credentials into a URL.
+        detail = getattr(e, "detail", None)
+        if isinstance(detail, str) and detail in {
+            "OAuth state does not match session.",
+            "Invalid or expired OAuth state parameter.",
+            "OAuth state is not bound to a session.",
+        }:
+            err_msg = (
+                "This Spotify sign-in link is invalid or expired, or it was "
+                "started in a different browser. Please press Connect Spotify "
+                "again."
+            )
+        elif isinstance(detail, str) and detail.startswith("Spotify token exchange failed"):
+            err_msg = (
+                "Spotify rejected the sign-in attempt. Please try connecting "
+                "again."
+            )
+        else:
+            err_msg = "Spotify authentication failed. Check backend logs."
+
         return RedirectResponse(
-            url=f"{frontend_url}/callback?error={urllib.parse.quote(err_msg)}",
-            status_code=303
+            url=f"{frontend_url}/callback?error="
+            f"{urllib.parse.quote(err_msg)}",
+            status_code=303,
         )
+
+@app.post("/api/auth/handoff")
+async def auth_handoff(payload: dict, response: Response):
+    """Adopt a session created on the OAuth callback origin.
+
+    Cookies are scoped to the origin that set them, and the Spotify callback
+    runs on the backend origin. The callback redirects to the frontend with a
+    short-lived single-use code; the frontend posts it here (same-origin, via
+    the nginx proxy) so the session cookie is issued for the frontend origin.
+    """
+    code = (payload or {}).get("code")
+    session_id = secure_session.consume_auth_handoff(code) if code else None
+    if not session_id:
+        raise HTTPException(status_code=400, detail="Invalid or expired auth handoff code")
+    secure_session.set_session_cookie(response, session_id)
+    return {"status": "ok"}
+
 
 @app.get("/api/auth/status")
 async def auth_status(request: Request):

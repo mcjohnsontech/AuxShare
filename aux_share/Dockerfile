@@ -6,7 +6,9 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
-ARG VITE_API_URL=/
+# Empty by default: requests are relative and proxied to the backend by nginx.
+# Set to an absolute URL (e.g. http://localhost:8000) to bypass the proxy.
+ARG VITE_API_URL=""
 ENV VITE_API_URL=${VITE_API_URL}
 RUN npm run build
 

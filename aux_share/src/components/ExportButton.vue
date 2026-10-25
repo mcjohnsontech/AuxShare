@@ -38,16 +38,16 @@ const pendingExportKey = 'spotify_pending_export_session'
 async function initiateLogin() {
   localStorage.setItem('auth_return_path', window.location.pathname)
   localStorage.setItem(pendingExportKey, props.sessionCode)
+  statusMessage.value = "Connecting to Spotify..."
+  statusType.value = "info"
   try {
-    const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-      credentials: 'include'
-    })
-    const data = await res.json()
-    if (data.url) {
-      window.location.href = data.url
-    } else {
-      throw new Error(data.detail || "Missing Spotify authorization URL")
-    }
+    // Start the OAuth flow on the backend origin. The state is bound to a
+    // cookie, and the browser must hold that cookie when Spotify redirects
+    // back to the backend, so login cannot be initiated from this origin.
+    const cfgRes = await fetch(`${API_BASE_URL}/api/config`)
+    const cfg = await cfgRes.json().catch(() => ({}))
+    const startUrl = cfg.auth_start_url || `${API_BASE_URL}/api/auth/start`
+    window.location.href = startUrl
   } catch (e) {
     console.error(e)
     localStorage.removeItem(pendingExportKey)

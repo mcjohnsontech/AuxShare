@@ -74,12 +74,17 @@ The Vue application uses Vue Router and Pinia:
   conversion/session state.
 - [`src/services/api.js`](./aux_share/src/services/api.js) calls the backend.
 
-By default, the frontend calls `http://localhost:8000`. Set `VITE_API_URL` when
-the API is hosted elsewhere.
+In the containerized deployment, `VITE_API_URL` is built as an empty string, so
+the browser calls `/api/*` on the frontend's own origin. Nginx serves the built
+frontend and proxies `/api` requests to the backend container — no CORS and no
+cross-origin cookie problems.
 
-For the containerized deployment, Nginx serves the built frontend and proxies
-`/api` requests to the backend container. The browser therefore uses the same
-origin for both frontend and API traffic.
+When running the Vite dev server (`npm run dev`), set `VITE_API_URL` to the
+backend origin, for example in `aux_share/.env.local`:
+
+```dotenv
+VITE_API_URL=http://localhost:8000
+```
 
 ### Backend
 
@@ -169,7 +174,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 The API is then available at <http://localhost:8000>. Interactive API
-documentation is available at <http://localhost:8000/docs>.
+documentation is available at <http://localhost:8000/swagger> (ReDoc at <http://localhost:8000/redoc>).
 
 ### 4. Install and run the frontend
 
@@ -184,7 +189,8 @@ npm run dev
 Open the Vite URL shown in the terminal, normally
 <http://localhost:5173>.
 
-To use a different backend URL, create `aux_share/.env.local`:
+For local development the backend runs on a different origin, so create
+`aux_share/.env.local` pointing at it:
 
 ```dotenv
 VITE_API_URL=http://localhost:8000
@@ -209,7 +215,7 @@ docker compose up --build -d
 
 The application is available at <http://localhost:5173>, the backend API at
 <http://localhost:8000>, and the API documentation at
-<http://localhost:8000/docs>. Follow service logs with:
+<http://localhost:8000/swagger> (ReDoc at <http://localhost:8000/redoc>). Follow service logs with:
 
 ```powershell
 docker compose logs -f

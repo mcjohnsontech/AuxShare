@@ -30,6 +30,14 @@ from session_manager import SessionManager
 
 client = TestClient(app)
 
+
+@pytest.fixture(autouse=True)
+def _clear_client_cookies():
+    """Keep tests order-independent: the module-level client keeps cookies."""
+    client.cookies.clear()
+    yield
+    client.cookies.clear()
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -69,19 +77,30 @@ def _make_mock_redis() -> tuple:
 
 
 def _setup_login_and_get_state(mock_redis, store):
-    """Run /api/auth/login and extract the stored OAuth state."""
+    """Run /api/auth/start and extract the OAuth state + session cookie.
+
+    Login must begin on the backend origin so the session cookie is present
+    when Spotify redirects back to /api/auth/callback.
+    """
     sm = SecureSessionManager(redis_client=mock_redis)
     with patch("auth.SpotifyAuth.session_manager", sm), \
          patch("main.secure_session", sm):
-        resp = client.get("/api/auth/login")
-    assert resp.status_code == 200
-    data = resp.json()
-    assert "url" in data
-    assert "code_challenge=" in data["url"]
+        resp = client.get("/api/auth/start", follow_redirects=False)
+    assert resp.status_code == 302
+    location = resp.headers["location"]
+    assert "accounts.spotify.com/authorize" in location
+    assert "code_challenge=" in location
+
+    # The session cookie set by /api/auth/start must be the one the state is
+    # bound to, otherwise the callback can never validate the binding.
+    cookie = client.cookies.get(SESSION_COOKIE_NAME)
+    assert cookie
 
     state_keys = [k for k in store.keys() if k.startswith("oauth_state:")]
     assert len(state_keys) == 1
     state = state_keys[0].replace("oauth_state:", "")
+    pending = json.loads(store[state_keys[0]])
+    assert pending["session_id"] == cookie
     return sm, state
 
 
@@ -373,10 +392,60 @@ def test_callback_sets_correct_cookie_flags():
     assert "samesite=lax" in set_cookie.lower()
 
 
+def test_auth_start_sets_cookie_and_redirects_to_spotify():
+    """/api/auth/start must set the session cookie *and* redirect to Spotify."""
+    mock_redis, store = _make_mock_redis()
+    sm = SecureSessionManager(redis_client=mock_redis)
+
+    with patch("auth.SpotifyAuth.session_manager", sm), \
+         patch("main.secure_session", sm):
+        resp = client.get("/api/auth/start", follow_redirects=False)
+
+    assert resp.status_code == 302
+    assert resp.headers["location"].startswith("https://accounts.spotify.com/authorize")
+    set_cookie = resp.headers.get("set-cookie", "")
+    assert SESSION_COOKIE_NAME in set_cookie
+    assert "httponly" in set_cookie.lower()
+
+    # The cookie must be the session the state is bound to, otherwise the
+    # callback cannot validate the binding.
+    cookie = client.cookies.get(SESSION_COOKIE_NAME)
+    state_key = next(k for k in store if k.startswith("oauth_state:"))
+    assert json.loads(store[state_key])["session_id"] == cookie
+
+
+def test_callback_without_session_cookie_rejected():
+    """A state bound to a session is unusable without that session's cookie."""
+    mock_redis, store = _make_mock_redis()
+    sm = SecureSessionManager(redis_client=mock_redis)
+    state = generate_state(32)
+    sm.store_oauth_pending_state(state, "sess_bound_to_someone_else", "verifier_x")
+
+    with patch("auth.SpotifyAuth.session_manager", sm), \
+         patch("main.secure_session", sm), \
+         patch("requests.post") as mock_post:
+        resp = client.get(
+            f"/api/auth/callback?code=test_code&state={state}",
+            follow_redirects=False,
+        )
+
+    mock_post.assert_not_called()  # must never reach the token exchange
+    assert resp.status_code == 303
+    assert "error=" in resp.headers["location"]
+
+
+def test_config_exposes_backend_origin():
+    resp = client.get("/api/config")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["auth_start_url"].endswith("/api/auth/start")
+    assert data["auth_callback_url"].endswith("/api/auth/callback")
+    assert "client_secret" not in json.dumps(data).lower()
+
+
 # ---------------------------------------------------------------------------
 # Session ID length
 # ---------------------------------------------------------------------------
-
 def test_long_random_ids_replace_4digit_codes():
     sm = SessionManager()
     with patch.object(sm.redis_client, "exists", return_value=False):

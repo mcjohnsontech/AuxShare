@@ -7,6 +7,10 @@
       </div>
     </header>
     <main class="container">
+      <div v-if="authError" class="auth-error" role="alert">
+        <span>{{ authError }}</span>
+        <button type="button" class="auth-error-dismiss" @click="dismissAuthError">Dismiss</button>
+      </div>
       <PlaylistInput @converted="handleConverted" />
       
       <div v-if="playlistStore.sessionCode" class="results-container">
@@ -37,6 +41,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { usePlaylistStore } from '@/stores/playlist'
 import PlaylistInput from '@/components/PlaylistInput.vue'
 import ShareLink from '@/components/ShareLink.vue'
@@ -46,6 +51,24 @@ import { ChevronDown, ChevronUp } from 'lucide-vue-next'
 
 const playlistStore = usePlaylistStore()
 const showDetails = ref(false)
+
+const route = useRoute()
+const router = useRouter()
+
+const authError = computed(() => {
+  const raw = route.query.auth_error
+  if (!raw) return ''
+  if (raw === 'handoff_failed') {
+    return 'Spotify sign-in could not be completed. Please try connecting again.'
+  }
+  return String(raw)
+})
+
+function dismissAuthError() {
+  const query = { ...route.query }
+  delete query.auth_error
+  router.replace({ path: route.path, query })
+}
 
 // Need to fetch tracks when showing details
 const sessionTracks = computed(() => {
@@ -86,6 +109,31 @@ async function handleConverted() {
   max-width: 960px;
   margin: 0 auto;
   padding: 0 24px;
+}
+
+.auth-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 20px 0 0;
+  padding: 12px 16px;
+  border: 1px solid var(--red-200, #fecaca);
+  border-radius: var(--radius-sm, 10px);
+  background: var(--red-50, #fef2f2);
+  color: var(--red-800, #991b1b);
+  font-size: 0.9rem;
+}
+
+.auth-error-dismiss {
+  flex: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
 }
 .topbar { border-bottom: 1px solid rgba(220, 229, 245, .8); background: rgba(255,255,255,.75); }
 .topbar-inner { display: flex; justify-content: space-between; align-items: center; max-width: 960px; margin: 0 auto; padding: 18px 24px; }
