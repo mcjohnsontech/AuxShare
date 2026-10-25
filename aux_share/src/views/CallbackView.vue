@@ -33,6 +33,8 @@ onMounted(() => {
     }
   } else if (error) {
     console.error('Auth error:', error)
+    localStorage.removeItem('spotify_pending_export_session')
+    localStorage.removeItem('auth_return_path')
     router.push('/?auth_error=' + encodeURIComponent(error))
   } else {
     router.push('/')

@@ -1,60 +1,83 @@
 <template>
-  <div class="playlist-input">
-    <h1 class="title">
-      <Music class="title-icon" />
-      AuxParty
-    </h1>
-    <p class="subtitle">Share music across any platform in seconds</p>
-    <p class="free-badge">
-      <Sparkles class="badge-icon" />
-      Now with FREE Apple Music support!
-    </p>
+  <section class="playlist-input">
+    <div class="eyebrow"><Sparkles :size="15" /> No login needed to preview your matches</div>
+    <div class="hero-copy">
+      <div class="brand-mark"><Music2 :size="24" /></div>
+      <p class="brand-name">AuxParty</p>
+      <h1 class="title">Move any playlist.<br><span>Keep the right songs.</span></h1>
+      <p class="subtitle">Convert a playlist between your favorite music services, review the matches, and share the result in seconds.</p>
+    </div>
+
+    <div class="flow-card">
+      <div class="step-heading">
+        <span class="step-number">1</span>
+        <div>
+          <h2>Where should we find your playlist?</h2>
+          <p>Paste a public Spotify or YouTube Music playlist link.</p>
+        </div>
+      </div>
+
+      <form @submit.prevent="handleSubmit" class="input-form">
+        <label class="input-label" for="playlist-url">Playlist link</label>
+        <div class="input-row">
+          <div class="input-wrapper">
+            <Link2 :size="18" class="input-icon" />
+            <input
+              id="playlist-url"
+              v-model="playlistUrl"
+              type="url"
+              placeholder="https://open.spotify.com/playlist/..."
+              :disabled="loading"
+              class="url-input"
+              autocomplete="url"
+            />
+          </div>
+          <button
+            type="submit"
+            :disabled="loading || !playlistUrl"
+            class="convert-button"
+          >
+            <Loader2 v-if="loading" class="spin-icon" />
+            <span v-else>Continue <ArrowRight :size="18" /></span>
+          </button>
+        </div>
+        <p class="input-hint"><ShieldCheck :size="15" /> Public links only. Your playlist is never modified.</p>
+      </form>
+
+      <div v-if="error" class="error-message" role="alert">
+        <AlertCircle class="error-icon" :size="18" />
+        <span>{{ error }}</span>
+      </div>
+    </div>
+
+    <div class="destination-section">
+      <div class="step-heading">
+        <span class="step-number">2</span>
+        <div>
+          <h2>Choose a destination</h2>
+          <p>We'll find the closest matches in that catalog.</p>
+        </div>
+      </div>
+      <PlatformSelector v-model="targetPlatform" />
+    </div>
+
     <div class="info-box">
       <div class="info-header">
-        <Lightbulb class="info-icon" />
-        <h4>Pro Tip</h4>
+        <Lightbulb :size="18" class="info-icon" />
+        <div>
+          <h4>For the best results</h4>
+          <p>Spotify playlists are currently the most reliable source. YouTube Music works best with public playlists.</p>
+        </div>
       </div>
-      <p>
-        <strong>Spotify playlists work best!</strong><br>
-        YouTube Music playlists may occasionally fail due to API limitations.
-      </p>
     </div>
-    <!-- Platform Selector -->
-    <PlatformSelector v-model="targetPlatform" />
-
-    <form @submit.prevent="handleSubmit" class="input-form">
-      <div class="input-wrapper">
-        <input
-          v-model="playlistUrl"
-          type="text"
-          placeholder="Paste your playlist URL (Spotify, YouTube Music, etc.)..."
-          :disabled="loading"
-          class="url-input"
-        />
-      </div>
-      
-      <button 
-        type="submit" 
-        :disabled="loading || !playlistUrl"
-        class="convert-button"
-      >
-        <Loader2 v-if="loading" class="spin-icon" />
-        <span v-else>Convert Playlist</span>
-      </button>
-    </form>
-
-    <div v-if="error" class="error-message">
-      <AlertCircle class="error-icon" />
-      {{ error }}
-    </div>
-  </div>
+  </section>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { usePlaylistStore } from '@/stores/playlist'
 import PlatformSelector from './PlatformSelector.vue'
-import { Music, Sparkles, Lightbulb, Loader2, AlertCircle } from 'lucide-vue-next'
+import { Music2, Sparkles, Lightbulb, Loader2, AlertCircle, Link2, ArrowRight, ShieldCheck } from 'lucide-vue-next'
 
 const playlistStore = usePlaylistStore()
 
@@ -72,193 +95,161 @@ async function handleSubmit() {
   try {
     await playlistStore.convertPlaylist(playlistUrl.value, targetPlatform.value)
     emit('converted')
-  } catch (err) {
-    // Error is handled in store
-  }
+  } catch (err) {}
 }
 </script>
 
 <style scoped>
 .playlist-input {
-  max-width: 600px;
+  max-width: 760px;
   margin: 0 auto;
-  padding: 40px;
-  background: var(--mantine-color-dark-6);
-  border-radius: 8px;
-  border: 1px solid #373A40;
-  text-align: center;
+  padding: 24px 0 48px;
 }
 
-.title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  margin-bottom: 0.5rem;
-  color: var(--mantine-color-gray-0);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-}
-
-.title-icon {
-  width: 40px;
-  height: 40px;
-  color: var(--mantine-color-grape-9);
-}
-
-.subtitle {
-  font-size: 1.1rem;
-  color: var(--mantine-color-gray-5);
-  margin-bottom: 1.5rem;
-}
-
-.free-badge {
-  background: rgba(134, 46, 156, 0.15);
-  color: var(--mantine-color-grape-7);
-  padding: 6px 16px;
-  border-radius: 20px;
+.eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.9rem;
+  padding: 7px 12px;
+  margin-bottom: 28px;
+  border: 1px solid var(--blue-100);
+  border-radius: var(--radius-pill);
+  background: var(--blue-50);
+  color: var(--blue-700);
+  font-size: 13px;
   font-weight: 600;
-  margin-bottom: 24px;
-  border: 1px solid rgba(134, 46, 156, 0.3);
 }
 
-.badge-icon {
-  width: 16px;
-  height: 16px;
+.hero-copy { text-align: center; }
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 12px;
+  border-radius: 14px;
+  background: var(--blue-500);
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(47, 107, 255, .2);
 }
-
-.input-form {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
+.brand-name {
+  margin: 0 0 18px;
+  color: var(--blue-700);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
 }
-
-.input-wrapper {
-  flex: 1;
-  position: relative;
+.title {
+  margin: 0;
+  color: var(--blue-900);
+  font-size: clamp(2.15rem, 6vw, 3.4rem);
+  font-weight: 700;
+  letter-spacing: -.045em;
+  line-height: 1.08;
 }
-
+.title span { color: var(--blue-500);
+}
+.subtitle {
+  max-width: 540px;
+  margin: 18px auto 34px;
+  color: var(--text-muted);
+  font-size: 16px;
+}
+.flow-card, .destination-section {
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.flow-card { margin-bottom: 16px; }
+.destination-section { margin-bottom: 16px; }
+.step-heading { display: flex; gap: 12px; align-items: flex-start; }
+.step-number {
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--blue-100);
+  color: var(--blue-700);
+  font-size: 14px;
+  font-weight: 700;
+}
+.step-heading h2 { margin: 2px 0 3px; font-size: 17px; }
+.step-heading p { margin: 0; color: var(--text-muted); font-size: 14px; }
+.input-form { margin-top: 24px; }
+.input-label { display: block; margin-bottom: 8px; color: var(--text); font-size: 13px; font-weight: 600; }
+.input-row { display: flex; gap: 10px; }
+.input-wrapper { position: relative; flex: 1; }
+.input-icon { position: absolute; top: 50%; left: 14px; color: var(--text-faint); transform: translateY(-50%); }
 .url-input {
   width: 100%;
-  padding: 12px 16px;
-  font-size: 1rem;
-  background: var(--mantine-color-dark-7);
-  border: 1px solid #373A40;
-  border-radius: 4px; /* Mantine default radius */
-  color: var(--mantine-color-gray-0);
-  transition: border-color 0.2s;
+  min-height: 50px;
+  padding: 0 16px 0 42px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
 }
-
-.url-input:focus {
-  outline: none;
-  border-color: var(--mantine-color-grape-9);
-}
-
-.url-input::placeholder {
-  color: #5c5f66;
-}
-
-.url-input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
+.url-input:focus { outline: none; border-color: var(--blue-500); box-shadow: 0 0 0 3px var(--blue-100); }
+.url-input::placeholder { color: var(--text-faint); }
+.url-input:disabled { background: var(--bg-subtle); cursor: not-allowed; }
 .convert-button {
-  padding: 0 24px;
-  font-size: 1rem;
-  font-weight: 600;
-  background: var(--mantine-color-grape-9);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 160px;
+  min-width: 126px;
+  min-height: 50px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--blue-500);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 150ms ease-out, transform 150ms ease-out;
 }
-
-.convert-button:hover:not(:disabled) {
-  background: var(--mantine-color-grape-7);
+.convert-button span { display: inline-flex; align-items: center; gap: 8px; }
+.convert-button:hover:not(:disabled) { background: var(--blue-600); transform: translateY(-1px); }
+.convert-button:disabled { opacity: .5; cursor: not-allowed; }
+.input-hint { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; color: var(--text-faint); font-size: 12px; }
+.error-message {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #f3b8b3;
+  border-radius: var(--radius-sm);
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-size: 14px;
 }
-
-.convert-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
 .spin-icon {
   animation: spin 1s linear infinite;
   width: 20px;
   height: 20px;
 }
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.error-message {
-  padding: 12px;
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  border-radius: 4px;
-  color: #ff6b6b;
-  margin-top: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 0.9rem;
-}
-
-.error-icon {
-  width: 18px;
-  height: 18px;
-}
-
 .info-box {
-  background: rgba(250, 176, 5, 0.1); /* Yellow/Orange tint */
-  border: 1px solid rgba(250, 176, 5, 0.3);
-  border-radius: 4px;
   padding: 16px;
-  margin: 0 0 24px 0;
-  text-align: left;
+  border: 1px solid #f2dfac;
+  border-radius: var(--radius-md);
+  background: var(--warning-bg);
 }
+.info-header { display: flex; gap: 10px; align-items: flex-start; }
+.info-icon { flex: 0 0 auto; color: var(--warning); }
+.info-box h4 { margin: 0 0 2px; color: var(--text); font-size: 14px; }
+.info-box p { margin: 0; color: var(--text-muted); font-size: 13px; }
 
-.info-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.info-icon {
-  width: 18px;
-  height: 18px;
-  color: #fab005;
-}
-
-.info-box h4 {
-  margin: 0;
-  color: #fab005;
-  font-size: 1rem;
-}
-
-.info-box p {
-  margin: 0;
-  color: var(--mantine-color-gray-5);
-  font-size: 0.9rem;
-  line-height: 1.5;
-  padding-left: 26px; /* Align with text start */
-}
-
-.info-box strong {
-  color: var(--mantine-color-gray-0);
+@media (max-width: 640px) {
+  .playlist-input { padding-top: 8px; }
+  .flow-card, .destination-section { padding: 18px; }
+  .input-row { flex-direction: column; }
+  .convert-button { width: 100%; }
 }
 </style>

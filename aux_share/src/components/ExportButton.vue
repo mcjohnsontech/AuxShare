@@ -19,9 +19,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { Loader2 } from 'lucide-vue-next'
-import { usePlaylistStore } from '@/stores/playlist'
 import { API_BASE_URL } from '@/services/api'
 
 const props = defineProps({
@@ -31,13 +30,14 @@ const props = defineProps({
   }
 })
 
-const playlistStore = usePlaylistStore()
 const isExporting = ref(false)
 const statusMessage = ref('')
 const statusType = ref('info')
+const pendingExportKey = 'spotify_pending_export_session'
 
 async function initiateLogin() {
   localStorage.setItem('auth_return_path', window.location.pathname)
+  localStorage.setItem(pendingExportKey, props.sessionCode)
   try {
     const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
       credentials: 'include'
@@ -46,10 +46,11 @@ async function initiateLogin() {
     if (data.url) {
       window.location.href = data.url
     } else {
-      throw new Error("Missing auth URL")
+      throw new Error(data.detail || "Missing Spotify authorization URL")
     }
   } catch (e) {
     console.error(e)
+    localStorage.removeItem(pendingExportKey)
     statusMessage.value = "Failed to start Spotify login"
     statusType.value = "error"
   }
@@ -88,8 +89,9 @@ async function handleExport() {
     }
     
     const data = await res.json()
-    statusMessage.value = `✅ Created! ${data.tracks_added} tracks added.`
+    statusMessage.value = `Created! ${data.tracks_added} tracks added.`
     statusType.value = "success"
+    localStorage.removeItem(pendingExportKey)
     
     // Open the new playlist
     if (data.playlist_url) {
@@ -104,6 +106,12 @@ async function handleExport() {
     isExporting.value = false
   }
 }
+
+onMounted(() => {
+  if (localStorage.getItem(pendingExportKey) === props.sessionCode) {
+    void handleExport()
+  }
+})
 </script>
 
 <style scoped>

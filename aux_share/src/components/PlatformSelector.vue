@@ -1,8 +1,7 @@
 <!-- src/components/PlatformSelector.vue -->
 
 <template>
-    <div class="platform-selector">
-      <label class="label">Convert to:</label>
+    <div class="platform-selector" aria-label="Choose destination platform">
       
       <div class="platform-buttons">
         <button
@@ -12,15 +11,19 @@
           :class="['platform-btn', { active: modelValue === platform.name }]"
           type="button"
         >
-          <span class="icon">{{ platform.icon }}</span>
-          <span class="name">{{ platform.display_name }}</span>
+          <span class="platform-icon">{{ getPlatformInitial(platform) }}</span>
+          <span class="platform-copy">
+            <span class="name">{{ platform.display_name }}</span>
+            <span class="note">{{ getPlatformNote(platform.name) }}</span>
+          </span>
+          <span v-if="modelValue === platform.name" class="selected-mark">✓</span>
         </button>
       </div>
     </div>
   </template>
   
   <script setup>
-  import { ref, onMounted } from 'vue'  // ✅ ADD onMounted
+  import { ref, onMounted } from 'vue'
   import api from '@/services/api'
   
   const props = defineProps({
@@ -52,60 +55,76 @@
   function selectPlatform(name) {
     emit('update:modelValue', name)
   }
+
+  function getPlatformInitial(platform) {
+    return platform.name === 'youtube_music' ? 'Y' : platform.display_name.charAt(0)
+  }
+
+  function getPlatformNote(name) {
+    const notes = {
+      spotify: 'Best for playlist export',
+      youtube_music: 'Play matched tracks',
+      apple_music: 'Free catalog matching'
+    }
+    return notes[name] || 'Available destination'
+  }
   </script>
   
   <style scoped>
   .platform-selector {
-    margin: 20px 0;
-  }
-  
-  .label {
-    display: block;
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 15px;
-    color: #333;
-  }
+      margin-top: 22px;
+    }
   
   .platform-buttons {
     display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
   }
   
   .platform-btn {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 20px 30px;
-    background: white;
-    border: 3px solid #e0e0e0;
-    border-radius: 16px;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+    padding: 14px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text);
     cursor: pointer;
-    transition: all 0.3s;
-    min-width: 140px;
+    text-align: left;
+    transition: border-color 150ms ease-out, background 150ms ease-out, box-shadow 150ms ease-out;
   }
   
   .platform-btn:hover {
-    border-color: #667eea;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    border-color: var(--blue-300);
+    background: var(--blue-50);
   }
   
   .platform-btn.active {
-    border-color: #667eea;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    border-color: var(--blue-500);
+    background: var(--blue-50);
+    box-shadow: 0 0 0 2px var(--blue-100);
   }
-  
-  .icon {
-    font-size: 2.5rem;
+  .platform-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: var(--blue-100);
+    color: var(--blue-700);
+    font-size: 15px;
+    font-weight: 700;
   }
-  
-  .name {
-    font-size: 1rem;
-    font-weight: 600;
+  .platform-copy { min-width: 0; }
+  .name { display: block; font-size: 13px; font-weight: 700; }
+  .note { display: block; margin-top: 3px; color: var(--text-muted); font-size: 11px; line-height: 1.3; }
+  .selected-mark { margin-left: auto; color: var(--blue-500); font-weight: 700; }
+  @media (max-width: 640px) {
+    .platform-buttons { grid-template-columns: 1fr; }
   }
   </style>

@@ -103,8 +103,9 @@ Sessions expire after 24 hours by default.
 - Node.js 20.19+ or 22.12+
 - Redis running on `localhost:6379`
 - Spotify developer credentials for Spotify playlist extraction
-- A Spotify application with the redirect URI
-  `http://localhost:5173/callback` if Spotify export is needed
+- A Spotify application with the backend redirect URI
+  `http://127.0.0.1:8000/api/auth/callback` if Spotify export is needed.
+  Set `SPOTIFY_REDIRECT_URI` if your deployment uses a different public backend URL.
 
 ## Setup
 

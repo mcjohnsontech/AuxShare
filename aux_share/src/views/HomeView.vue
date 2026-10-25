@@ -1,6 +1,12 @@
 <template>
   <div class="home">
-    <div class="container">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="topbar-brand"><span class="brand-dot"></span> AuxParty</div>
+        <span class="topbar-note">Playlist converter</span>
+      </div>
+    </header>
+    <main class="container">
       <PlaylistInput @converted="handleConverted" />
       
       <div v-if="playlistStore.sessionCode" class="results-container">
@@ -24,7 +30,8 @@
           {{ showDetails ? 'Hide Details' : 'Show Details' }}
         </button>
       </div>
-    </div>
+    </main>
+      <footer class="footer">Built for better music sharing <span>•</span> No account required to get started</footer>
   </div>
 </template>
 
@@ -70,18 +77,27 @@ async function handleConverted() {
 <style scoped>
 .home {
   min-height: 100vh;
-  background-color: var(--mantine-color-dark-7);
-  padding: 40px 20px;
+  background:
+    radial-gradient(circle at 50% -10%, var(--blue-100), transparent 35%),
+    var(--bg-subtle);
+  color: var(--text);
 }
-
 .container {
-  max-width: 900px;
+  max-width: 960px;
   margin: 0 auto;
+  padding: 0 24px;
 }
+.topbar { border-bottom: 1px solid rgba(220, 229, 245, .8); background: rgba(255,255,255,.75); }
+.topbar-inner { display: flex; justify-content: space-between; align-items: center; max-width: 960px; margin: 0 auto; padding: 18px 24px; }
+.topbar-brand { display: flex; align-items: center; gap: 9px; color: var(--blue-900); font-size: 15px; font-weight: 700; }
+.brand-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--blue-500); box-shadow: 0 0 0 5px var(--blue-100); }
+.topbar-note { color: var(--text-faint); font-size: 13px; }
+.footer { padding: 0 24px 28px; color: var(--text-faint); font-size: 12px; text-align: center; }
+.footer span { padding: 0 5px; color: var(--blue-300); }
 
 .results-container {
   max-width: 800px;
-  margin: 40px auto 0;
+  margin: 0 auto 48px;
 }
 
 .toggle-details {
@@ -91,10 +107,10 @@ async function handleConverted() {
   gap: 8px;
   margin: 24px auto;
   padding: 10px 20px;
-  background: var(--mantine-color-dark-6);
-  color: var(--mantine-color-grape-9);
-  border: 1px solid var(--mantine-color-grape-9);
-  border-radius: 4px;
+  background: var(--surface);
+  color: var(--blue-700);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -102,7 +118,13 @@ async function handleConverted() {
 }
 
 .toggle-details:hover {
-  background: rgba(134, 46, 156, 0.1);
+  background: var(--blue-50);
+}
+
+@media (max-width: 640px) {
+  .container { padding: 0 16px; }
+  .topbar-inner { padding: 16px; }
+  .topbar-note { display: none; }
 }
 
 .icon {

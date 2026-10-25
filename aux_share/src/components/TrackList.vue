@@ -2,7 +2,13 @@
 
 <template>
   <div class="track-list">
-    <h3>🎵 Tracks ({{ tracks.length }})</h3>
+    <div class="list-heading">
+      <div>
+        <p class="eyebrow">Track details</p>
+        <h3>Matched songs</h3>
+      </div>
+      <span class="count">{{ tracks.length }} songs</span>
+    </div>
     
     <div class="list-container">
       <div 
@@ -63,12 +69,17 @@ function getConfidence(track) {
 
 <style scoped>
 .track-list {
-  margin: 30px 0;
+  margin: 16px 0;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow);
 }
-
-h3 {
-  margin-bottom: 20px;
-  color: #333;
+.list-heading { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+.eyebrow { margin: 0 0 4px; color: var(--blue-500); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+h3 { margin: 0; color: var(--text); font-size: 20px; }
+.count { color: var(--text-muted); font-size: 13px;
 }
 
 .list-container {
@@ -81,28 +92,26 @@ h3 {
   display: flex;
   align-items: center;
   gap: 15px;
-  padding: 15px;
-  margin-bottom: 10px;
-  background: white;
-  border: 2px solid #e0e0e0;
-  border-radius: 12px;
-  transition: all 0.3s;
+  padding: 13px;
+  margin-bottom: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: border-color 150ms ease-out, background 150ms ease-out;
 }
-
 .track-item:hover {
-  border-color: #667eea;
-  transform: translateX(5px);
+  border-color: var(--blue-300);
+  background: var(--blue-50);
 }
-
 .track-item.not-matched {
-  opacity: 0.6;
-  border-color: #fcc;
+  background: var(--warning-bg);
+  border-color: #f2dfac;
 }
 
 .track-number {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #999;
+  color: var(--text-faint);
   min-width: 30px;
   text-align: center;
 }
@@ -115,7 +124,7 @@ h3 {
 .track-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #333;
+  color: var(--text);
   margin-bottom: 5px;
   white-space: nowrap;
   overflow: hidden;
@@ -124,13 +133,13 @@ h3 {
 
 .track-artist {
   font-size: 0.95rem;
-  color: #666;
+  color: var(--text-muted);
   margin-bottom: 3px;
 }
 
 .track-album {
   font-size: 0.85rem;
-  color: #999;
+  color: var(--text-faint);
 }
 
 .track-status {
@@ -149,18 +158,18 @@ h3 {
 }
 
 .status-badge.success {
-  background: #d4edda;
-  color: #155724;
+  background: var(--success-bg);
+  color: var(--success);
 }
 
 .status-badge.error {
-  background: #f8d7da;
-  color: #721c24;
+  background: var(--danger-bg);
+  color: var(--danger);
 }
 
 .confidence {
   font-size: 0.8rem;
-  color: #666;
+  color: var(--text-muted);
 }
 
 /* Custom scrollbar */
@@ -169,12 +178,17 @@ h3 {
 }
 
 .list-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--bg-subtle);
   border-radius: 4px;
 }
 
 .list-container::-webkit-scrollbar-thumb {
-  background: #667eea;
+  background: var(--blue-300);
   border-radius: 4px;
+}
+@media (max-width: 560px) {
+  .track-item { align-items: flex-start; }
+  .track-status { align-items: flex-start; }
+  .track-number { min-width: 22px; }
 }
 </style>

@@ -21,6 +21,7 @@ from auth import SpotifyAuth
 from security.csrf import default_csrf
 from security.session import SecureSessionManager, SESSION_COOKIE_NAME
 from security.redaction import SensitiveDataLogFilter, redact_sensitive_string
+from jobs.models import JobStatus, JobTrackStatus
 from jobs.manager import JobManager
 from jobs.review import ReviewService
 from jobs.events import ReviewEventLogger

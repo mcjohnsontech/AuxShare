@@ -2,31 +2,29 @@
 
 <template>
   <div v-if="stats" class="match-stats">
-    <h3>📊 Match Statistics</h3>
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Conversion complete</p>
+        <h3>Your match report</h3>
+      </div>
+      <span class="rate">{{ (stats.match_rate * 100).toFixed(0) }}% match rate</span>
+    </div>
     
     <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-value">{{ stats.total }}</div>
-        <div class="stat-label">Total Tracks</div>
-      </div>
-      
-      <div class="stat-card success">
+      <div class="stat-card primary">
         <div class="stat-value">{{ stats.matched }}</div>
         <div class="stat-label">Matched</div>
       </div>
-      
       <div class="stat-card warning" v-if="stats.failed">
         <div class="stat-value">{{ stats.failed }}</div>
-        <div class="stat-label">Not Found</div>
+        <div class="stat-label">Needs attention</div>
       </div>
-      
       <div class="stat-card">
-        <div class="stat-value">{{ (stats.match_rate * 100).toFixed(1) }}%</div>
-        <div class="stat-label">Match Rate</div>
+        <div class="stat-value">{{ stats.total }}</div>
+        <div class="stat-label">Total songs</div>
       </div>
-      
       <div class="stat-card">
-        <div class="stat-value">{{ (stats.avg_confidence * 100).toFixed(1) }}%</div>
+        <div class="stat-value">{{ (stats.avg_confidence * 100).toFixed(0) }}%</div>
         <div class="stat-label">Avg Confidence</div>
       </div>
     </div>
@@ -52,74 +50,65 @@ defineProps({
 
 <style scoped>
 .match-stats {
-  margin: 30px 0;
-  padding: 25px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin: 16px 0;
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
 }
-
-h3 {
-  margin-bottom: 20px;
-  color: #333;
+.section-heading { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 20px; }
+.eyebrow { margin: 0 0 4px; color: var(--blue-500); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+h3 { margin: 0; color: var(--text); font-size: 20px; }
+.rate { padding: 6px 10px; border-radius: var(--radius-pill); background: var(--success-bg); color: var(--success); font-size: 12px; font-weight: 700; white-space: nowrap;
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 15px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 18px;
 }
 
 .stat-card {
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 12px;
+  padding: 14px 10px;
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
   text-align: center;
-  border: 2px solid transparent;
-  transition: all 0.3s;
+  border: 1px solid var(--border);
 }
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+.stat-card.primary {
+  background: var(--blue-50);
+  border-color: var(--blue-100);
 }
-
-.stat-card.success {
-  background: #d4edda;
-  border-color: #28a745;
-}
-
 .stat-card.warning {
-  background: #fff3cd;
-  border-color: #ffc107;
+  background: var(--warning-bg);
+  border-color: #f2dfac;
 }
-
 .stat-value {
-  font-size: 2rem;
+  font-size: 1.65rem;
   font-weight: 700;
-  color: #333;
+  color: var(--text);
   margin-bottom: 5px;
 }
-
 .stat-label {
-  font-size: 0.9rem;
-  color: #666;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
-
 .progress-bar {
   width: 100%;
-  height: 12px;
-  background: #e0e0e0;
+  height: 8px;
+  background: var(--blue-100);
   border-radius: 6px;
   overflow: hidden;
 }
-
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-  transition: width 1s ease;
+  background: var(--blue-500);
+  transition: width 250ms ease-out;
+}
+@media (max-width: 520px) {
+  .section-heading { flex-direction: column; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
