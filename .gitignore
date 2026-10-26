@@ -46,3 +46,10 @@ backend/__pycache__
 backend/.secret_encryption_key
 *.sqlite
 backend/*.sqlite
+
+AUDIT_REPORT.md
+DECISIONS.md
+FRONTEND-REDESIGN.md
+LIVE_VERIFICATION.md
+PHASE5_RESEARCH.md
+test_report.txt
