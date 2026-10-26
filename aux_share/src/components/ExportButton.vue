@@ -1,18 +1,40 @@
 <template>
-  <button 
-    class="export-button" 
-    @click="handleExport"
-    :disabled="isExporting"
-  >
-    <div v-if="isExporting" class="content">
-      <Loader2 class="icon spin" />
-      <span>Creating Playlist...</span>
-    </div>
-    <div v-else class="content">
-      <span>Export to Spotify</span>
-    </div>
-  </button>
-  
+  <div class="export-actions">
+    <button
+      class="export-button"
+      @click="handleExport"
+      :disabled="isExporting || checkingStatus || exported"
+      :class="{ 'is-done': exported }"
+    >
+      <div v-if="checkingStatus" class="content">
+        <Loader2 class="icon spin" />
+        <span>Checking Spotify...</span>
+      </div>
+      <div v-else-if="isExporting" class="content">
+        <Loader2 class="icon spin" />
+        <span>Creating Playlist...</span>
+      </div>
+      <div v-else-if="exported" class="content">
+        <CheckCircle2 class="icon" />
+        <span>Exported to Spotify</span>
+      </div>
+      <div v-else class="content">
+        <span>Export to Spotify</span>
+      </div>
+    </button>
+
+    <a
+      v-if="exported && playlistUrl"
+      :href="playlistUrl"
+      target="_blank"
+      rel="noopener"
+      class="playlist-link"
+    >
+      <ExternalLink class="icon" />
+      Open playlist<span v-if="playlistTrackCount"> ({{ playlistTrackCount }} tracks)</span>
+    </a>
+  </div>
+
   <p v-if="statusMessage" :class="['status-msg', statusType]">
     {{ statusMessage }}
   </p>
@@ -20,7 +42,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { Loader2 } from 'lucide-vue-next'
+import { Loader2, CheckCircle2, ExternalLink } from 'lucide-vue-next'
 import { API_BASE_URL } from '@/services/api'
 
 const props = defineProps({
@@ -31,6 +53,10 @@ const props = defineProps({
 })
 
 const isExporting = ref(false)
+const checkingStatus = ref(true)
+const exported = ref(false)
+const playlistUrl = ref('')
+const playlistTrackCount = ref(0)
 const statusMessage = ref('')
 const statusType = ref('info')
 const pendingExportKey = 'spotify_pending_export_session'
@@ -56,7 +82,39 @@ async function initiateLogin() {
   }
 }
 
+function applyExported(data) {
+  exported.value = true
+  playlistUrl.value = data.playlist_url || playlistUrl.value
+  if (typeof data.tracks_in_playlist === 'number') {
+    playlistTrackCount.value = data.tracks_in_playlist
+  }
+}
+
+async function checkExportStatus() {
+  checkingStatus.value = true
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/api/export/status?session_code=${encodeURIComponent(props.sessionCode)}&target_platform=spotify`,
+      { credentials: 'include' }
+    )
+    if (res.ok) {
+      const data = await res.json()
+      if (data.exported) {
+        applyExported(data)
+        statusMessage.value = ''
+      }
+    }
+  } catch (e) {
+    // Status is only a convenience gate; never block exporting on it.
+    console.error(e)
+  } finally {
+    checkingStatus.value = false
+  }
+}
+
 async function handleExport() {
+  if (exported.value || isExporting.value) return
+
   // Purge any legacy token from localStorage
   localStorage.removeItem('spotify_access_token')
   
@@ -89,10 +147,20 @@ async function handleExport() {
     }
     
     const data = await res.json()
-    statusMessage.value = `Created! ${data.tracks_added} tracks added.`
+    if (data.already_existed) {
+      statusMessage.value = `This playlist was already created (${data.tracks_in_playlist} tracks).`
+    } else {
+      const failed = data.failed || 0
+      statusMessage.value = failed > 0
+        ? `Created with ${data.tracks_added} of ${data.tracks_requested} tracks — ${failed} could not be matched.`
+        : `Created! All ${data.tracks_added} tracks added.`
+    }
     statusType.value = "success"
     localStorage.removeItem(pendingExportKey)
-    
+
+    // The playlist now exists, so the button stays disabled from here on.
+    applyExported(data)
+
     // Open the new playlist
     if (data.playlist_url) {
       window.open(data.playlist_url, '_blank')
@@ -107,7 +175,14 @@ async function handleExport() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await checkExportStatus()
+
+  if (exported.value) {
+    localStorage.removeItem(pendingExportKey)
+    return
+  }
+
   if (localStorage.getItem(pendingExportKey) === props.sessionCode) {
     void handleExport()
   }
@@ -139,6 +214,39 @@ onMounted(() => {
 .export-button:disabled {
   opacity: 0.7;
   cursor: wait;
+}
+
+.export-button.is-done {
+  background: #1a7f3c;
+  box-shadow: none;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.export-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.export-actions .export-button {
+  margin-top: 0;
+}
+
+.playlist-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #1DB954;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.playlist-link:hover {
+  text-decoration: underline;
 }
 
 .content {

@@ -106,11 +106,18 @@ def test_export_characterization():
         "target_platform": "spotify"
     }
     fake_platform = MagicMock()
+    fake_platform.get_current_user_id.return_value = "user_abc"
+    fake_platform.get_playlist_track_uris.return_value = []
     fake_platform.create_playlist.return_value = "new_playlist_id_999"
     fake_platform.add_tracks_to_playlist.return_value = None
 
     with patch.object(main.session_manager, "get_session", return_value=fake_session), \
-         patch.object(main.detector, "get_platform", return_value=fake_platform):
+         patch.object(main.detector, "get_platform", return_value=fake_platform), \
+         patch.object(main.session_manager.redis_client, "get", return_value=None), \
+         patch.object(main.session_manager.redis_client, "setex"), \
+         patch.object(main.session_manager.redis_client, "set", return_value=True), \
+         patch.object(main.session_manager.redis_client, "delete", return_value=1), \
+         patch("requests.get", return_value=MagicMock(status_code=500)):
         resp = client.post("/api/export", json={
             "session_code": "1234",
             "target_platform": "spotify",
@@ -122,6 +129,7 @@ def test_export_characterization():
         assert data["success"] is True
         assert "new_playlist_id_999" in data["playlist_url"]
         assert data["tracks_added"] == 1
+        assert data["created_new"] is True
 
 def test_export_non_spotify_rejected_characterization():
     fake_session = {

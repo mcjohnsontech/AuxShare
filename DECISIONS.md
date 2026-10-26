@@ -61,3 +61,33 @@ All "verify" items from the spec have been checked and documented.
 - **Redirect URI matching:** `SPOTIFY_REDIRECT_URI` must match a Redirect URI
   registered in the Spotify dashboard *exactly* (host + port + path). It is
   pinned in `.env` to the verified working value.
+
+## Export idempotency
+- **One playlist per export.** `POST /api/export` is idempotent for the tuple
+  `(Spotify account id, target platform, session code)`. The record lives in
+  Redis (`export:<account>:<platform>:<session>`, 30-day TTL) and holds the
+  `playlist_id`, whether the run completed, and the track count.
+- **Why not the description marker:** Spotify playlist listing is paginated and
+  newly created private playlists are not reliably returned in the first page, so
+  a description-marker search alone created duplicates. The marker
+  (`converted-by-auxshare:session_<code>`) is now only a **recovery path** for
+  playlists created before the Redis record existed.
+- **Fast path:** if the record says `completed`, the playlist is verified with a
+  single `GET /playlists/{id}?fields=id,tracks(total)` and returned with
+  `tracks_added: 0`, `already_existed: true`. If the playlist was deleted on
+  Spotify, the record is cleared and a new playlist is created. If verification
+  fails for a transport/auth reason, the record is trusted (fail closed: never
+  duplicate).
+- **No duplicate tracks:** on a resumed run the existing playlist URIs are read
+  and only missing tracks are appended. URIs are deduplicated within the request.
+- **Concurrency:** a `SET NX EX 180` lock guards playlist creation; a second
+  concurrent request gets `409` instead of creating a second playlist.
+- **Intentional copies:** send `force_new: true` to deliberately create another
+  playlist; the stored record then points at the newest playlist.
+- **UI gating:** `GET /api/export/status?session_code=...` reports
+  `{authenticated, exported, playlist_url, tracks_in_playlist}` for the current
+  account and is verified against Spotify. `ExportButton` disables itself once
+  `exported` is true and offers an "Open playlist" link; a deleted playlist
+  clears the record and re-enables the button. The check is advisory only — the
+  export endpoint stays idempotent regardless, so a stale UI cannot duplicate.
+

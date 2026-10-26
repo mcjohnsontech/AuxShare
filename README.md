@@ -247,6 +247,24 @@ host ports are already in use.
 | `GET` | `/api/auth/login` | Get a Spotify authorization URL |
 | `GET` | `/api/auth/callback` | Exchange a Spotify authorization code |
 | `POST` | `/api/export` | Create a Spotify playlist from a Spotify-targeted session |
+| `GET` | `/api/export/status` | Whether the signed-in user already exported a session |
+
+Export is **idempotent** per `(Spotify account, target platform, session code)`:
+clicking Export again returns the playlist that already exists instead of
+creating another one, and never appends duplicate tracks. Pass
+`"force_new": true` to deliberately create a second copy.
+
+`GET /api/export/status?session_code=...&target_platform=spotify` reports
+whether the signed-in account already has a completed export for that session.
+The UI uses it to disable the Export button and link to the playlist; if the
+playlist was deleted on Spotify the status is `exported: false` and the button
+becomes available again.
+
+```powershell
+curl -X POST http://localhost:8000/api/export `
+  -H "Content-Type: application/json" -b cookies.txt `
+  -d '{"session_code":"SESSION_CODE","target_platform":"spotify"}'
+```
 
 Example conversion request:
 

@@ -79,16 +79,63 @@ class SpotifyPlatform(MusicPlatform):
             # Would need to create a playlist here
             return f"spotify:search:{'+'.join(track_ids[:5])}"
 
+    def get_current_user_id(self, access_token: str) -> str:
+        """Return the Spotify user id that owns this access token."""
+        import requests
+
+        headers = {'Authorization': f'Bearer {access_token}'}
+        resp = requests.get('https://api.spotify.com/v1/me', headers=headers, timeout=15)
+        if resp.status_code != 200:
+            raise Exception(f"Failed to get user info: {resp.text}")
+        return resp.json()['id']
+
+    def get_playlist_track_uris(self, access_token: str, playlist_id: str) -> List[str]:
+        """Return every track URI already in a playlist (paginated)."""
+        import requests
+
+        headers = {'Authorization': f'Bearer {access_token}'}
+        uris: List[str] = []
+        url = (
+            f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
+            '?fields=next,items(track(uri))&limit=100'
+        )
+        while url:
+            resp = requests.get(url, headers=headers, timeout=15)
+            if resp.status_code != 200:
+                raise Exception(f"Failed to read playlist tracks: {resp.text}")
+            payload = resp.json()
+            for item in payload.get('items') or []:
+                track = (item or {}).get('track') or {}
+                uri = track.get('uri')
+                if uri:
+                    uris.append(uri)
+            url = payload.get('next')
+        return uris
+
+    def get_playlist_track_count(self, access_token: str, playlist_id: str) -> Optional[int]:
+        """Return the playlist's track count, or None if it no longer exists.
+
+        Raises for transport/auth errors so callers can distinguish "deleted"
+        from "could not check right now" and avoid creating a duplicate.
+        """
+        import requests
+
+        headers = {'Authorization': f'Bearer {access_token}'}
+        url = f'https://api.spotify.com/v1/playlists/{playlist_id}?fields=id,tracks(total)'
+        resp = requests.get(url, headers=headers, timeout=15)
+        if resp.status_code == 404:
+            return None
+        if resp.status_code != 200:
+            raise Exception(f"Failed to read playlist: {resp.text}")
+        payload = resp.json() or {}
+        return ((payload.get('tracks') or {}).get('total'))
+
     def create_playlist(self, access_token: str, name: str, description: str = "") -> str:
         """Create a new playlist and return its ID"""
         import requests
         
-        # 1. Get User ID
+        user_id = self.get_current_user_id(access_token)
         headers = {'Authorization': f'Bearer {access_token}'}
-        user_resp = requests.get('https://api.spotify.com/v1/me', headers=headers)
-        if user_resp.status_code != 200:
-            raise Exception("Failed to get user info")
-        user_id = user_resp.json()['id']
         
         # 2. Create Playlist
         url = f"https://api.spotify.com/v1/users/{user_id}/playlists"
@@ -98,25 +145,35 @@ class SpotifyPlatform(MusicPlatform):
             "public": False
         }
         
-        resp = requests.post(url, headers=headers, json=data)
+        resp = requests.post(url, headers=headers, json=data, timeout=15)
         if resp.status_code not in [200, 201]:
             raise Exception(f"Failed to create playlist: {resp.text}")
             
         return resp.json()['id']
     
     def find_playlist_by_marker(self, access_token: str, marker: str) -> Optional[str]:
-        """Find a playlist containing the marker in description"""
+        """Find a playlist containing the marker in its description.
+
+        Paginates through the user's playlists. This is only a recovery path for
+        playlists created before durable idempotency records existed; the
+        primary lookup is the Redis export record.
+        """
         import requests
         headers = {'Authorization': f'Bearer {access_token}'}
+        url = 'https://api.spotify.com/v1/me/playlists?limit=50'
+        pages = 0
         try:
-            resp = requests.get('https://api.spotify.com/v1/me/playlists?limit=50', headers=headers)
-            if resp.status_code != 200:
-                return None
-            playlists = resp.json().get('items', [])
-            for pl in playlists:
-                desc = pl.get('description') or ''
-                if marker in desc:
-                    return pl['id']
+            while url and pages < 20:
+                resp = requests.get(url, headers=headers, timeout=15)
+                if resp.status_code != 200:
+                    return None
+                payload = resp.json()
+                for pl in payload.get('items') or []:
+                    desc = (pl or {}).get('description') or ''
+                    if marker in desc:
+                        return pl['id']
+                url = payload.get('next')
+                pages += 1
         except Exception:
             pass
         return None

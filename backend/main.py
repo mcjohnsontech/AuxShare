@@ -183,6 +183,9 @@ class ExportRequest(BaseModel):
     target_platform: str
     access_token: Optional[str] = None
     playlist_name: Optional[str] = "AuxParty Session"
+    # Export is idempotent per (Spotify account, target platform, session).
+    # Set this only when the user explicitly asks for another copy.
+    force_new: bool = False
 
 @app.get("/")
 async def root():
@@ -557,23 +560,94 @@ async def export_playlist(request: ExportRequest, req: Request):
                 detail="Spotify authorization required. Please authenticate via /api/auth/login"
             )
 
-        # 4. Create Playlist with marker for resumability
-        from jobs.manager import JobManager
-        job_manager = JobManager(session_manager.redis_client)
-        marker = f"converted-by-auxshare:session_{request.session_code}"
+        # 4. Resolve the Spotify account so the idempotency key is per user.
+        from export_idempotency import ExportIdempotency
+
         try:
-            existing = platform.find_playlist_by_marker(access_token, marker)
-        except Exception:
-            existing = None
-        if isinstance(existing, str) and existing:
-            playlist_id = existing
-        else:
-            playlist_id = platform.create_playlist(
-                access_token,
-                request.playlist_name,
-                f"Created with AuxParty 🎵 {marker}"
+            account_id = platform.get_current_user_id(access_token)
+        except Exception as e:
+            raise HTTPException(
+                status_code=502,
+                detail=f"Could not identify the Spotify account: {e}"
             )
-        
+
+        idem = ExportIdempotency(session_manager.redis_client)
+        marker = f"converted-by-auxshare:session_{request.session_code}"
+
+        stored = idem.get_record(account_id, request.target_platform, request.session_code)
+        # force_new deliberately ignores any existing export for this session.
+        playlist_id = None if request.force_new else (stored or {}).get("playlist_id")
+        created_new = False
+
+        # Fast path: this session was already fully exported to this account.
+        # Return the existing playlist without touching Spotify again.
+        if playlist_id and stored.get("completed") and not request.force_new:
+            known_tracks = stored.get("tracks_added", 0)
+            try:
+                live_count = platform.get_playlist_track_count(access_token, playlist_id)
+            except Exception:
+                # Could not verify (network/auth): keep trusting the record so a
+                # hiccup cannot produce a duplicate playlist.
+                live_count = known_tracks
+            if live_count is not None:
+                return {
+                    "success": True,
+                    "playlist_url": f"https://open.spotify.com/playlist/{playlist_id}",
+                    "playlist_id": playlist_id,
+                    "created_new": False,
+                    "already_existed": True,
+                    "tracks_added": 0,
+                    "tracks_in_playlist": live_count,
+                    "tracks_requested": len(tracks),
+                    "tracks_matched": known_tracks,
+                    "failed": max(len(tracks) - known_tracks, 0),
+                    "status": "complete",
+                }
+            # The playlist was deleted on Spotify: fall through and make a new one.
+            idem.clear_record(account_id, request.target_platform, request.session_code)
+            playlist_id = None
+
+        if not playlist_id and not request.force_new:
+            # Recovery path for playlists created before export records existed.
+            try:
+                found = platform.find_playlist_by_marker(access_token, marker)
+            except Exception:
+                found = None
+            if isinstance(found, str) and found:
+                playlist_id = found
+                idem.save_record(
+                    account_id, request.target_platform, request.session_code,
+                    playlist_id, completed=False
+                )
+
+        if not playlist_id:
+            if not idem.acquire_lock(account_id, request.target_platform, request.session_code):
+                raise HTTPException(
+                    status_code=409,
+                    detail="This playlist is already being created. Please wait a moment and try again."
+                )
+            try:
+                # Double-checked: another request may have finished while we
+                # waited for the lock. Never applies when a new copy was asked for.
+                if not request.force_new:
+                    stored = idem.get_record(account_id, request.target_platform, request.session_code)
+                    playlist_id = (stored or {}).get("playlist_id")
+
+                if not playlist_id:
+                    playlist_id = platform.create_playlist(
+                        access_token,
+                        request.playlist_name,
+                        f"Created with AuxParty 🎵 {marker}"
+                    )
+                    created_new = True
+                    # Persist immediately so a crash mid-add cannot duplicate it.
+                    idem.save_record(
+                        account_id, request.target_platform, request.session_code,
+                        playlist_id, completed=False
+                    )
+            finally:
+                idem.release_lock(account_id, request.target_platform, request.session_code)
+
         # 5. Search & Add Tracks
         real_uris = []
         for track in tracks:
@@ -589,13 +663,40 @@ async def export_playlist(request: ExportRequest, req: Request):
                     real_uris.append(f"spotify:track:{result['id']}")
             except Exception:
                 continue
+
+        # Only add tracks that are not already in the playlist, so re-clicking
+        # Export cannot append a second copy of every song.
+        existing_uris = set()
+        if not created_new:
+            # This playlist predates this request, so it may already hold tracks.
+            # If we cannot read them, adding blindly would duplicate songs, so we
+            # stop and report instead (a retry re-reads the playlist).
+            try:
+                existing_uris = set(platform.get_playlist_track_uris(access_token, playlist_id))
+            except Exception as e:
+                raise HTTPException(
+                    status_code=502,
+                    detail=(
+                        "Could not verify which tracks are already in this playlist, "
+                        f"so nothing was added (to avoid duplicates). Please try again. ({e})"
+                    )
+                )
+
+        desired_uris = []
+        seen = set()
+        for uri in real_uris:
+            if uri in seen:
+                continue
+            seen.add(uri)
+            if uri not in existing_uris:
+                desired_uris.append(uri)
         
         # 6. Add to Playlist in batches
         added = 0
-        if real_uris:
+        if desired_uris:
             try:
-                platform.add_tracks_to_playlist(access_token, playlist_id, real_uris)
-                added = len(real_uris)
+                platform.add_tracks_to_playlist(access_token, playlist_id, desired_uris)
+                added = len(desired_uris)
             except Exception as e:
                 # On permanent failure, provide CSV fallback
                 import csv
@@ -639,17 +740,30 @@ async def export_playlist(request: ExportRequest, req: Request):
             if resp.status_code == 200:
                 total = resp.json().get('total', added)
             else:
-                total = added
+                total = len(existing_uris) + added
         except Exception:
-            total = added
-        
+            total = len(existing_uris) + added
+
+        # Record completion so future clicks are fully idempotent.
+        try:
+            idem.save_record(
+                account_id, request.target_platform, request.session_code,
+                playlist_id, completed=True, tracks_added=total
+            )
+        except Exception:
+            pass
+
         return {
             "success": True,
             "playlist_url": f"https://open.spotify.com/playlist/{playlist_id}",
+            "playlist_id": playlist_id,
+            "created_new": created_new,
+            "already_existed": not created_new,
             "tracks_added": added,
             "tracks_in_playlist": total,
             "tracks_requested": len(tracks),
-            "failed": len(tracks) - added,
+            "tracks_matched": len(real_uris),
+            "failed": len(tracks) - len(real_uris),
             "status": "complete"
         }
         
@@ -658,6 +772,76 @@ async def export_playlist(request: ExportRequest, req: Request):
     except Exception as e:
         print(f"Export failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/export/status")
+async def export_status(req: Request, session_code: str, target_platform: str = "spotify"):
+    """Report whether the current Spotify user already exported this session.
+
+    Used by the UI to disable the Export button once a playlist exists. The
+    answer is scoped to the signed-in Spotify account and verified against
+    Spotify, so a deleted playlist re-enables the button.
+    """
+    if target_platform != 'spotify':
+        raise HTTPException(status_code=400, detail="Only Spotify export is supported currently")
+
+    from export_idempotency import ExportIdempotency
+
+    session_id = req.cookies.get(SESSION_COOKIE_NAME)
+    user_tokens = secure_session.get_user_tokens(session_id, "spotify") if session_id else None
+    if not user_tokens:
+        return {"authenticated": False, "exported": False, "playlist_id": None, "playlist_url": None}
+
+    access_token = user_tokens.get("access_token")
+    if user_tokens.get("is_expired") and user_tokens.get("refresh_token"):
+        try:
+            access_token = SpotifyAuth.refresh_user_token(session_id)
+        except Exception:
+            return {"authenticated": False, "exported": False, "playlist_id": None, "playlist_url": None}
+
+    platform = detector.get_platform('spotify')
+    try:
+        account_id = platform.get_current_user_id(access_token)
+    except Exception:
+        # Token is unusable; let the UI treat the user as signed out.
+        return {"authenticated": False, "exported": False, "playlist_id": None, "playlist_url": None}
+
+    idem = ExportIdempotency(session_manager.redis_client)
+    stored = idem.get_record(account_id, target_platform, session_code)
+    playlist_id = (stored or {}).get("playlist_id")
+    if not (stored and stored.get("completed") and playlist_id):
+        return {
+            "authenticated": True,
+            "exported": False,
+            "playlist_id": None,
+            "playlist_url": None,
+        }
+
+    try:
+        live_count = platform.get_playlist_track_count(access_token, playlist_id)
+    except Exception:
+        # Cannot verify right now: trust the record rather than re-enable
+        # Export and risk creating a duplicate playlist.
+        live_count = stored.get("tracks_added", 0)
+
+    if live_count is None:
+        # Playlist was deleted on Spotify; allow a fresh export.
+        idem.clear_record(account_id, target_platform, session_code)
+        return {
+            "authenticated": True,
+            "exported": False,
+            "playlist_id": None,
+            "playlist_url": None,
+        }
+
+    return {
+        "authenticated": True,
+        "exported": True,
+        "playlist_id": playlist_id,
+        "playlist_url": f"https://open.spotify.com/playlist/{playlist_id}",
+        "tracks_in_playlist": live_count,
+    }
+
 
 @app.get("/api/health")
 async def health_check():
