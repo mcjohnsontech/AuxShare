@@ -1,114 +1,269 @@
-<!-- src/components/MatchStats.vue -->
-
 <template>
-  <div v-if="stats" class="match-stats">
-    <div class="section-heading">
-      <div>
-        <p class="eyebrow">Conversion complete</p>
-        <h3>Your match report</h3>
+  <section v-if="stats" class="match-stats" aria-label="Match summary">
+    <div class="summary">
+      <div class="rate-block">
+        <p class="rate tabular">{{ rateLabel }}</p>
+        <p class="rate-caption">{{ matchedLabel }}</p>
       </div>
-      <span class="rate">{{ (stats.match_rate * 100).toFixed(0) }}% match rate</span>
-    </div>
-    
-    <div class="stats-grid">
-      <div class="stat-card primary">
-        <div class="stat-value">{{ stats.matched }}</div>
-        <div class="stat-label">Matched</div>
-      </div>
-      <div class="stat-card warning" v-if="stats.failed">
-        <div class="stat-value">{{ stats.failed }}</div>
-        <div class="stat-label">Needs attention</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">{{ stats.total }}</div>
-        <div class="stat-label">Total songs</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">{{ (stats.avg_confidence * 100).toFixed(0) }}%</div>
-        <div class="stat-label">Avg Confidence</div>
+
+      <div class="bar-block">
+        <div
+          class="match-bar"
+          role="img"
+          :aria-label="barLabel"
+        >
+          <span class="bar-matched" :style="{ width: `${matchedShare}%` }"></span>
+          <span class="bar-missing" :style="{ width: `${missingShare}%` }"></span>
+        </div>
+        <p class="bar-caption">
+          <span class="key key-matched" aria-hidden="true"></span>Matched
+          <span class="key key-missing" aria-hidden="true"></span>Not found
+        </p>
       </div>
     </div>
 
-    <!-- Progress bar -->
-    <div class="progress-bar">
-      <div 
-        class="progress-fill" 
-        :style="{ width: (stats.match_rate * 100) + '%' }"
-      ></div>
-    </div>
-  </div>
+    <dl class="metrics">
+      <div class="metric">
+        <dt>Matched</dt>
+        <dd class="tabular">{{ safeMatched }}</dd>
+      </div>
+      <div class="metric" :class="{ 'has-missing': safeFailed > 0 }">
+        <dt>Not found</dt>
+        <dd class="tabular">{{ safeFailed }}</dd>
+      </div>
+      <div class="metric">
+        <dt>Total</dt>
+        <dd class="tabular">{{ safeTotal }}</dd>
+      </div>
+      <div v-if="avgConfidenceLabel" class="metric">
+        <dt>Avg. confidence</dt>
+        <dd class="tabular">{{ avgConfidenceLabel }}</dd>
+      </div>
+    </dl>
+
+    <p v-if="confidenceBreakdown" class="confidence-line">
+      Confidence: {{ confidenceBreakdown }}
+    </p>
+  </section>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+import { pluralize, toPercent } from '@/lib/format'
+
+const props = defineProps({
   stats: {
     type: Object,
-    required: true
-  }
+    default: null,
+  },
 })
+
+const safeTotal = computed(() => numberOrZero(props.stats?.total))
+const safeMatched = computed(() => numberOrZero(props.stats?.matched))
+const safeFailed = computed(() => numberOrZero(props.stats?.failed))
+
+const ratePercent = computed(() => {
+  const fromStats = toPercent(props.stats?.match_rate)
+  if (fromStats !== null) return fromStats
+  if (safeTotal.value === 0) return 0
+  return Math.round((safeMatched.value / safeTotal.value) * 100)
+})
+
+const rateLabel = computed(() => `${ratePercent.value}%`)
+const matchedLabel = computed(
+  () => `${safeMatched.value} of ${pluralize(safeTotal.value, 'track')} matched`,
+)
+
+const matchedShare = computed(() =>
+  safeTotal.value === 0 ? 0 : (safeMatched.value / safeTotal.value) * 100,
+)
+const missingShare = computed(() =>
+  safeTotal.value === 0 ? 0 : (safeFailed.value / safeTotal.value) * 100,
+)
+
+const barLabel = computed(
+  () => `${safeMatched.value} matched and ${safeFailed.value} not found out of ${pluralize(safeTotal.value, 'track')}.`,
+)
+
+const avgConfidenceLabel = computed(() => {
+  if (safeMatched.value === 0) return ''
+  return toPercent(props.stats?.avg_confidence) === null
+    ? ''
+    : `${toPercent(props.stats.avg_confidence)}%`
+})
+
+const confidenceBreakdown = computed(() => {
+  if (safeMatched.value === 0) return ''
+  const high = numberOrZero(props.stats?.high_confidence)
+  const medium = numberOrZero(props.stats?.medium_confidence)
+  const low = numberOrZero(props.stats?.low_confidence)
+  if (high + medium + low === 0) return ''
+  const parts = []
+  if (high) parts.push(`${high} high`)
+  if (medium) parts.push(`${medium} medium`)
+  if (low) parts.push(`${low} low`)
+  return parts.join(' · ')
+})
+
+function numberOrZero(value) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0
+}
 </script>
 
 <style scoped>
 .match-stats {
-  margin: 16px 0;
-  padding: 24px;
-  background: var(--surface);
+  padding: var(--space-4);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-}
-.section-heading { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 20px; }
-.eyebrow { margin: 0 0 4px; color: var(--blue-500); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-h3 { margin: 0; color: var(--text); font-size: 20px; }
-.rate { padding: 6px 10px; border-radius: var(--radius-pill); background: var(--success-bg); color: var(--success); font-size: 12px; font-weight: 700; white-space: nowrap;
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 10px;
-  margin-bottom: 18px;
+.summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
 }
 
-.stat-card {
-  padding: 14px 10px;
-  background: var(--bg-subtle);
-  border-radius: var(--radius-sm);
-  text-align: center;
-  border: 1px solid var(--border);
+.rate-block {
+  flex: 0 0 auto;
+  min-width: 132px;
 }
-.stat-card.primary {
-  background: var(--blue-50);
-  border-color: var(--blue-100);
-}
-.stat-card.warning {
-  background: var(--warning-bg);
-  border-color: #f2dfac;
-}
-.stat-value {
-  font-size: 1.65rem;
-  font-weight: 700;
+
+.rate {
   color: var(--text);
-  margin-bottom: 5px;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-display);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
-.stat-label {
-  font-size: 0.75rem;
+
+.rate-caption {
+  margin-top: 5px;
   color: var(--text-muted);
+  font-size: var(--text-sm);
 }
-.progress-bar {
+
+.bar-block {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.match-bar {
+  display: flex;
   width: 100%;
   height: 8px;
-  background: var(--blue-100);
-  border-radius: 6px;
   overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
 }
-.progress-fill {
+
+.bar-matched {
   height: 100%;
-  background: var(--blue-500);
-  transition: width 250ms ease-out;
+  background: var(--success);
 }
-@media (max-width: 520px) {
-  .section-heading { flex-direction: column; }
-  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+
+.bar-missing {
+  height: 100%;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      var(--warning-border) 0 4px,
+      transparent 4px 8px
+    ),
+    var(--warning-bg);
+}
+
+.bar-caption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+  color: var(--text-faint);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+}
+
+.key {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.key-matched {
+  background: var(--success);
+}
+
+.key-missing {
+  margin-left: 10px;
+  border: 1px solid var(--warning-border);
+  background: var(--warning-bg);
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--divider);
+}
+
+.metric {
+  min-width: 0;
+}
+
+.metric dt {
+  color: var(--text-faint);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.metric dd {
+  margin: 2px 0 0;
+  color: var(--text);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+.metric.has-missing dd {
+  color: var(--warning-strong);
+}
+
+.confidence-line {
+  margin-top: var(--space-2);
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 640px) {
+  .summary {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .rate-block {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+  }
+
+  .rate {
+    font-size: var(--text-xl);
+  }
+
+  .rate-caption {
+    margin: 0;
+  }
+
+  .metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: var(--space-3);
+  }
 }
 </style>

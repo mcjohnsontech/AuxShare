@@ -1,255 +1,558 @@
 <template>
-  <section class="playlist-input">
-    <div class="eyebrow"><Sparkles :size="15" /> No login needed to preview your matches</div>
-    <div class="hero-copy">
-      <div class="brand-mark"><Music2 :size="24" /></div>
-      <p class="brand-name">AuxParty</p>
-      <h1 class="title">Move any playlist.<br><span>Keep the right songs.</span></h1>
-      <p class="subtitle">Convert a playlist between your favorite music services, review the matches, and share the result in seconds.</p>
+  <section class="converter" aria-labelledby="converter-heading">
+    <div class="converter-head">
+      <p class="eyebrow">Start a conversion</p>
+      <h2 id="converter-heading">Paste a playlist, pick a destination.</h2>
     </div>
 
-    <div class="flow-card">
-      <div class="step-heading">
-        <span class="step-number">1</span>
-        <div>
-          <h2>Where should we find your playlist?</h2>
-          <p>Paste a public Spotify or YouTube Music playlist link.</p>
-        </div>
-      </div>
-
-      <form @submit.prevent="handleSubmit" class="input-form">
-        <label class="input-label" for="playlist-url">Playlist link</label>
-        <div class="input-row">
-          <div class="input-wrapper">
-            <Link2 :size="18" class="input-icon" />
-            <input
-              id="playlist-url"
-              v-model="playlistUrl"
-              type="url"
-              placeholder="https://open.spotify.com/playlist/..."
-              :disabled="loading"
-              class="url-input"
-              autocomplete="url"
-            />
+    <form novalidate @submit.prevent="handleSubmit">
+      <div class="step">
+        <div class="step-head">
+          <span class="step-number" aria-hidden="true">1</span>
+          <div>
+            <h3>Playlist link</h3>
+            <p>Public Spotify or YouTube Music playlists.</p>
           </div>
+        </div>
+
+        <label class="field-label" for="playlist-url">Playlist URL</label>
+        <div class="url-field" :class="{ 'is-invalid': validationError, 'is-valid': detected }">
+          <Link2 :size="17" class="url-icon" aria-hidden="true" />
+          <input
+            id="playlist-url"
+            ref="urlInput"
+            v-model="playlistUrl"
+            type="text"
+            inputmode="url"
+            autocomplete="url"
+            autocapitalize="off"
+            spellcheck="false"
+            placeholder="https://open.spotify.com/playlist/…"
+            :disabled="busy"
+            aria-required="true"
+            :aria-invalid="validationError ? 'true' : 'false'"
+            :aria-describedby="describedBy"
+            @input="onInput"
+          />
           <button
-            type="submit"
-            :disabled="loading || !playlistUrl"
-            class="convert-button"
+            v-if="playlistUrl && !busy"
+            type="button"
+            class="clear-button"
+            aria-label="Clear the playlist link"
+            @click="clearUrl"
           >
-            <Loader2 v-if="loading" class="spin-icon" />
-            <span v-else>Continue <ArrowRight :size="18" /></span>
+            <X :size="15" aria-hidden="true" />
           </button>
         </div>
-        <p class="input-hint"><ShieldCheck :size="15" /> Public links only. Your playlist is never modified.</p>
-      </form>
 
-      <div v-if="error" class="error-message" role="alert">
-        <AlertCircle class="error-icon" :size="18" />
-        <span>{{ error }}</span>
+        <p v-if="detected" class="field-note is-detected" role="status" aria-live="polite">
+          <PlatformMark :platform="detected" size="sm" />
+          {{ detectedName }} playlist detected
+        </p>
+        <p v-else class="field-note">
+          Share → Copy link to playlist. Make sure it is public.
+        </p>
+
+        <p v-if="validationError" id="url-error" class="field-error" role="alert">
+          <AlertCircle :size="15" aria-hidden="true" />
+          <span>{{ validationError }}</span>
+        </p>
+
+        <details class="link-help">
+          <summary>Where do I find this?</summary>
+          <ul>
+            <li><strong>Spotify:</strong> open the playlist → ··· → Share → Copy link to playlist.</li>
+            <li><strong>YouTube Music:</strong> open the playlist → Share → Copy link.</li>
+          </ul>
+        </details>
       </div>
-    </div>
 
-    <div class="destination-section">
-      <div class="step-heading">
-        <span class="step-number">2</span>
+      <div class="step">
+        <div class="step-head">
+          <span class="step-number" aria-hidden="true">2</span>
+          <div>
+            <h3>Destination</h3>
+            <p>We find the closest match in that catalogue.</p>
+          </div>
+        </div>
+        <PlatformSelector v-model="targetPlatform" />
+      </div>
+
+      <button type="submit" class="submit-button" :disabled="!canSubmit" :aria-busy="busy">
+        <Loader2 v-if="busy" class="spin" :size="18" aria-hidden="true" />
+        <span>{{ busy ? 'Converting playlist…' : 'Convert playlist' }}</span>
+        <ArrowRight v-if="!busy" :size="18" aria-hidden="true" />
+      </button>
+
+      <div v-if="busy" class="conversion-progress" role="status" aria-live="polite">
+        <span class="eq-bars" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
         <div>
-          <h2>Choose a destination</h2>
-          <p>We'll find the closest matches in that catalog.</p>
+          <p class="progress-title">{{ stageLabel }}</p>
+          <p class="progress-note">Large playlists can take up to a minute. Keep this tab open.</p>
         </div>
       </div>
-      <PlatformSelector v-model="targetPlatform" />
-    </div>
 
-    <div class="info-box">
-      <div class="info-header">
-        <Lightbulb :size="18" class="info-icon" />
+      <div v-if="submitError" class="submit-error" role="alert">
+        <AlertCircle :size="17" aria-hidden="true" />
         <div>
-          <h4>For the best results</h4>
-          <p>Spotify playlists are currently the most reliable source. YouTube Music works best with public playlists.</p>
+          <p class="submit-error-title">That conversion did not finish</p>
+          <p class="submit-error-text">{{ submitError }}</p>
         </div>
       </div>
-    </div>
+
+      <p class="assurance">
+        <ShieldCheck :size="14" aria-hidden="true" />
+        Public links only. Your source playlist is never modified. No account needed.
+      </p>
+    </form>
   </section>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { usePlaylistStore } from '@/stores/playlist'
+import { computed, onBeforeUnmount, ref } from 'vue'
+import {
+  AlertCircle,
+  ArrowRight,
+  Link2,
+  Loader2,
+  ShieldCheck,
+  X,
+} from 'lucide-vue-next'
 import PlatformSelector from './PlatformSelector.vue'
-import { Music2, Sparkles, Lightbulb, Loader2, AlertCircle, Link2, ArrowRight, ShieldCheck } from 'lucide-vue-next'
+import PlatformMark from './PlatformMark.vue'
+import { usePlaylistStore } from '@/stores/playlist'
+import { classifyPlaylistUrl, getPlatform } from '@/lib/platforms'
+
+const emit = defineEmits(['converted'])
 
 const playlistStore = usePlaylistStore()
 
 const playlistUrl = ref('')
-const targetPlatform = ref('apple_music')  // Default to Apple Music
+const targetPlatform = ref('apple_music')
+const urlInput = ref(null)
+const validationError = ref('')
+const submitError = ref('')
+const detected = ref(null)
+const stageIndex = ref(0)
 
-const emit = defineEmits(['converted'])
+let stageTimer = null
 
-const loading = computed(() => playlistStore.loading)
-const error = computed(() => playlistStore.error)
+const busy = computed(() => playlistStore.loading)
+const detectedName = computed(() => getPlatform(detected.value).name)
+
+const canSubmit = computed(
+  () => !busy.value && playlistUrl.value.trim().length > 0 && Boolean(targetPlatform.value),
+)
+
+const describedBy = computed(() => {
+  const ids = []
+  if (validationError.value) ids.push('url-error')
+  return ids.length ? ids.join(' ') : undefined
+})
+
+const STAGES = computed(() => [
+  'Fetching the playlist from your source service…',
+  `Matching tracks on ${getPlatform(targetPlatform.value).name}…`,
+  'Preparing your results…',
+])
+
+const stageLabel = computed(() => STAGES.value[Math.min(stageIndex.value, STAGES.value.length - 1)])
+
+function onInput() {
+  if (validationError.value) validationError.value = ''
+  if (submitError.value) submitError.value = ''
+  detected.value = classifyPlaylistUrl(playlistUrl.value).platform
+}
+
+function clearUrl() {
+  playlistUrl.value = ''
+  detected.value = null
+  validationError.value = ''
+  submitError.value = ''
+  urlInput.value?.focus()
+}
+
+function startStages() {
+  stageIndex.value = 0
+  stopStages()
+  stageTimer = setInterval(() => {
+    if (stageIndex.value < STAGES.value.length - 1) stageIndex.value += 1
+  }, 9000)
+}
+
+function stopStages() {
+  if (stageTimer) {
+    clearInterval(stageTimer)
+    stageTimer = null
+  }
+}
+
+function friendlyError(error) {
+  const status = error?.response?.status
+  const detail = error?.response?.data?.detail
+
+  if (!error?.response) {
+    if (error?.code === 'ECONNABORTED') {
+      return 'The conversion took too long to finish. Try again — very large playlists can take over a minute.'
+    }
+    return 'We could not reach the AuxShare server. Check your connection and try again.'
+  }
+
+  if (status === 429) {
+    return 'Too many conversions from this network. Wait a moment and try again.'
+  }
+  if (status === 503) {
+    return 'Playlist storage is temporarily unavailable. Please try again in a moment.'
+  }
+  if (status && status < 500 && typeof detail === 'string' && detail.trim()) {
+    return detail
+  }
+  return 'Something went wrong while converting that playlist. Try again, or try a different playlist.'
+}
 
 async function handleSubmit() {
-  if (!playlistUrl.value) return
+  if (busy.value) return
+
+  const result = classifyPlaylistUrl(playlistUrl.value)
+  if (result.error) {
+    validationError.value = result.error
+    urlInput.value?.focus()
+    return
+  }
+
+  validationError.value = ''
+  submitError.value = ''
+  playlistStore.error = null
+  startStages()
 
   try {
-    await playlistStore.convertPlaylist(playlistUrl.value, targetPlatform.value)
+    await playlistStore.convertPlaylist(result.url, targetPlatform.value)
     emit('converted')
-  } catch (err) {}
+  } catch (error) {
+    submitError.value = friendlyError(error)
+  } finally {
+    stopStages()
+  }
 }
+
+onBeforeUnmount(stopStages)
+
+defineExpose({
+  focusUrl: () => urlInput.value?.focus(),
+})
 </script>
 
 <style scoped>
-.playlist-input {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 24px 0 48px;
-}
-
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 12px;
-  margin-bottom: 28px;
-  border: 1px solid var(--blue-100);
-  border-radius: var(--radius-pill);
-  background: var(--blue-50);
-  color: var(--blue-700);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.hero-copy { text-align: center; }
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 12px;
-  border-radius: 14px;
-  background: var(--blue-500);
-  color: #fff;
-  box-shadow: 0 8px 20px rgba(47, 107, 255, .2);
-}
-.brand-name {
-  margin: 0 0 18px;
-  color: var(--blue-700);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-.title {
-  margin: 0;
-  color: var(--blue-900);
-  font-size: clamp(2.15rem, 6vw, 3.4rem);
-  font-weight: 700;
-  letter-spacing: -.045em;
-  line-height: 1.08;
-}
-.title span { color: var(--blue-500);
-}
-.subtitle {
-  max-width: 540px;
-  margin: 18px auto 34px;
-  color: var(--text-muted);
-  font-size: 16px;
-}
-.flow-card, .destination-section {
-  padding: 24px;
+.converter {
+  padding: var(--space-5);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow);
 }
-.flow-card { margin-bottom: 16px; }
-.destination-section { margin-bottom: 16px; }
-.step-heading { display: flex; gap: 12px; align-items: flex-start; }
+
+.converter-head {
+  margin-bottom: var(--space-4);
+}
+
+.eyebrow {
+  margin-bottom: 4px;
+  color: var(--blue-700);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.converter-head h2 {
+  font-size: var(--text-lg);
+  letter-spacing: var(--tracking-tight);
+}
+
+.step + .step {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--divider);
+}
+
+.step-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: var(--space-3);
+}
+
 .step-number {
   display: grid;
   place-items: center;
-  flex: 0 0 28px;
-  height: 28px;
+  flex: 0 0 22px;
+  height: 22px;
+  margin-top: 1px;
   border-radius: 50%;
-  background: var(--blue-100);
+  background: var(--blue-50);
   color: var(--blue-700);
-  font-size: 14px;
-  font-weight: 700;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
 }
-.step-heading h2 { margin: 2px 0 3px; font-size: 17px; }
-.step-heading p { margin: 0; color: var(--text-muted); font-size: 14px; }
-.input-form { margin-top: 24px; }
-.input-label { display: block; margin-bottom: 8px; color: var(--text); font-size: 13px; font-weight: 600; }
-.input-row { display: flex; gap: 10px; }
-.input-wrapper { position: relative; flex: 1; }
-.input-icon { position: absolute; top: 50%; left: 14px; color: var(--text-faint); transform: translateY(-50%); }
-.url-input {
-  width: 100%;
-  min-height: 50px;
-  padding: 0 16px 0 42px;
+
+.step-head h3 {
+  font-size: var(--text-base);
+  letter-spacing: 0;
+}
+
+.step-head p {
+  margin-top: 1px;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.url-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 0 12px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+  transition:
+    border-color var(--dur-1) var(--ease-out),
+    box-shadow var(--dur-1) var(--ease-out);
 }
-.url-input:focus { outline: none; border-color: var(--blue-500); box-shadow: 0 0 0 3px var(--blue-100); }
-.url-input::placeholder { color: var(--text-faint); }
-.url-input:disabled { background: var(--bg-subtle); cursor: not-allowed; }
-.convert-button {
+
+.url-field:focus-within {
+  border-color: var(--blue-500);
+  box-shadow: 0 0 0 3px var(--blue-100);
+}
+
+.url-field.is-invalid {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-bg);
+}
+
+.url-icon {
+  flex: 0 0 auto;
+  color: var(--text-faint);
+}
+
+.url-field input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: var(--text-sm);
+}
+
+.url-field input:focus {
+  outline: none;
+}
+
+.url-field input::placeholder {
+  color: var(--text-faint);
+}
+
+.url-field input:disabled {
+  color: var(--text-muted);
+}
+
+.clear-button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-faint);
+}
+
+.clear-button:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.clear-button:focus-visible {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 1px;
+}
+
+.field-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+}
+
+.field-note.is-detected {
+  color: var(--text-muted);
+  font-weight: var(--weight-medium);
+}
+
+.field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 7px;
+  color: var(--danger-strong);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+}
+
+.field-error svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.link-help {
+  margin-top: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.link-help summary {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 0;
+  border-radius: 3px;
+  color: var(--blue-700);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.link-help ul {
+  margin: var(--space-2) 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 3px;
+  color: var(--text-muted);
+}
+
+.submit-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 126px;
-  min-height: 50px;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--control-lg);
+  margin-top: var(--space-4);
   padding: 0 18px;
-  border: 0;
+  border: 1px solid var(--blue-700);
   border-radius: var(--radius-sm);
-  background: var(--blue-500);
+  background: var(--blue-600);
   color: #fff;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 150ms ease-out, transform 150ms ease-out;
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset;
+  transition: transform var(--dur-1) var(--ease-out);
 }
-.convert-button span { display: inline-flex; align-items: center; gap: 8px; }
-.convert-button:hover:not(:disabled) { background: var(--blue-600); transform: translateY(-1px); }
-.convert-button:disabled { opacity: .5; cursor: not-allowed; }
-.input-hint { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; color: var(--text-faint); font-size: 12px; }
-.error-message {
+
+.submit-button:hover:not(:disabled) {
+  background: var(--blue-700);
+}
+
+.submit-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.submit-button:disabled {
+  background: var(--blue-50);
+  border-color: var(--blue-200);
+  color: var(--blue-800);
+  box-shadow: none;
+}
+
+.conversion-progress {
   display: flex;
-  gap: 10px;
   align-items: flex-start;
-  margin-top: 16px;
-  padding: 12px;
-  border: 1px solid #f3b8b3;
+  gap: 10px;
+  margin-top: var(--space-3);
+  padding: 10px 12px;
+  border: 1px solid var(--info-border);
+  border-radius: var(--radius-sm);
+  background: var(--info-bg);
+  color: var(--blue-800);
+}
+
+.conversion-progress .eq-bars {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.progress-title {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.progress-note {
+  margin-top: 1px;
+  color: var(--text-muted);
+  font-size: var(--text-2xs);
+}
+
+.submit-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: var(--space-3);
+  padding: 10px 12px;
+  border: 1px solid var(--danger-border);
   border-radius: var(--radius-sm);
   background: var(--danger-bg);
-  color: var(--danger);
-  font-size: 14px;
+  color: var(--danger-strong);
 }
-.spin-icon {
-  animation: spin 1s linear infinite;
-  width: 20px;
-  height: 20px;
-}
-.info-box {
-  padding: 16px;
-  border: 1px solid #f2dfac;
-  border-radius: var(--radius-md);
-  background: var(--warning-bg);
-}
-.info-header { display: flex; gap: 10px; align-items: flex-start; }
-.info-icon { flex: 0 0 auto; color: var(--warning); }
-.info-box h4 { margin: 0 0 2px; color: var(--text); font-size: 14px; }
-.info-box p { margin: 0; color: var(--text-muted); font-size: 13px; }
 
-@media (max-width: 640px) {
-  .playlist-input { padding-top: 8px; }
-  .flow-card, .destination-section { padding: 18px; }
-  .input-row { flex-direction: column; }
-  .convert-button { width: 100%; }
+.submit-error svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.submit-error-title {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+}
+
+.submit-error-text {
+  margin-top: 1px;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-regular);
+}
+
+.assurance {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: var(--space-3);
+  color: var(--text-faint);
+  font-size: var(--text-2xs);
+  line-height: 1.45;
+}
+
+.assurance svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+@media (max-width: 560px) {
+  .converter {
+    padding: var(--space-4);
+  }
+
+  .converter-head h2 {
+    font-size: var(--text-md);
+  }
 }
 </style>

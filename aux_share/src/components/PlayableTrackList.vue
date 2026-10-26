@@ -1,424 +1,211 @@
 <template>
-  <div class="playable-track-list">
-    <div class="header">
-      <div class="header-content">
-        <h3 class="header-title">
-          <Music class="header-icon" />
-          {{ tracks.length }} Songs Ready to Play
-        </h3>
-        <button 
-          v-if="canPlayQueue" 
-          class="play-all-button" 
-          @click="$emit('play-all')"
-        >
-          <Play class="btn-icon" /> Play Queue
-        </button>
+  <section class="playable-list" aria-labelledby="playable-heading">
+    <div class="list-head">
+      <div class="list-title">
+        <p class="eyebrow">{{ playableCount }} of {{ pluralize(tracks.length, 'track') }} playable here</p>
+        <h2 id="playable-heading">{{ canPlayInApp && playableCount > 0 ? 'Listen to the playlist' : 'Tracks in this playlist' }}</h2>
       </div>
-      <div class="platform-badge">
-        <component :is="getPlatformIcon(targetPlatform)" class="badge-icon" />
-        <span class="name">{{ getPlatformName(targetPlatform) }}</span>
-      </div>
-    </div>
-    
-    <div class="list-container">
-      <div 
-        v-for="(track, index) in tracks" 
-        :key="index"
-        class="track-item"
-        :class="{ 'unavailable': !getTrackUrl(track) }"
-      >
-        <div class="track-number">{{ index + 1 }}</div>
-        
-        <div class="track-info">
-          <div class="track-title">{{ track.title }}</div>
-          <div class="track-artist">{{ track.artist }}</div>
-          <div class="track-album" v-if="track.album">{{ track.album }}</div>
-        </div>
-        
-        <div class="track-actions">
-          <a 
-            v-if="getTrackUrl(track)" 
-            :href="getTrackUrl(track)"
-            target="_blank"
-            class="play-button"
-            @click.prevent="trackPlayClick(track, index)"
-          >
-            <Play class="action-icon" /> Play
-          </a>
-          <span v-else class="unavailable-text">
-            Not Available
-          </span>
-        </div>
+
+      <div class="head-actions">
+        <span class="target-chip">
+          <PlatformMark :platform="targetPlatform" size="sm" />
+          <span>{{ platform.name }}</span>
+        </span>
+        <span v-if="canPlayInApp && playableCount > 0" class="head-note">Start with any track</span>
       </div>
     </div>
 
-    <!-- Summary at bottom -->
-    <div class="summary">
-      <p>
-        <strong>{{ availableCount }}</strong> of <strong>{{ tracks.length }}</strong> songs available
-      </p>
-      
-      <a 
-        v-if="playlistUrl" 
-        :href="playlistUrl"
-        target="_blank"
-        class="open-playlist-button"
-      >
-        <ExternalLink class="btn-icon" /> 
-        Open Playlist in {{ getPlatformName(targetPlatform) }}
-      </a>
-      
-      <p v-else class="help-text">
-        Click any song above to play it in {{ getPlatformName(targetPlatform) }}
-      </p>
-    </div>
-  </div>
+    <p v-if="!canPlayInApp" class="platform-note">
+      <Info :size="15" aria-hidden="true" />
+      <span>
+        {{ platform.playbackNote }} Use the open-link button on any track to listen there.
+      </span>
+    </p>
+    <p v-else-if="playableCount === 0" class="platform-note is-warning">
+      <Info :size="15" aria-hidden="true" />
+      <span>This session has no playable media yet. Open a track on {{ platform.name }} instead.</span>
+    </p>
+
+    <ol class="rows">
+      <TrackRow
+        v-for="(track, index) in tracks"
+        :key="`${trackKey(track, targetPlatform)}-${index}`"
+        :track="track"
+        :index="index + 1"
+        :platform="targetPlatform"
+        :active="activeKey === trackKey(track, targetPlatform)"
+        :playing="isPlaying"
+        :show-play="canPlayInApp && isTrackMatched(track, targetPlatform)"
+        show-status
+        :show-confidence="false"
+        @play="$emit('play-track', track)"
+      />
+    </ol>
+
+    <p class="list-footnote">
+      <template v-if="platform.key === 'apple_music'">
+        Previews are 30 seconds and supplied by Apple Music. The queue advances when a preview ends.
+      </template>
+      <template v-else-if="platform.key === 'youtube_music'">
+        Playback uses the YouTube player. Some tracks may be unavailable due to regional rights.
+      </template>
+      <template v-else>
+        Spotify playback is not available in the browser here. Tracks open in Spotify.
+      </template>
+    </p>
+  </section>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { Music, Play, ExternalLink, Disc, Youtube, Headphones } from 'lucide-vue-next'
+import { Info } from 'lucide-vue-next'
+import TrackRow from './TrackRow.vue'
+import PlatformMark from './PlatformMark.vue'
+import { canPlayTrack, getPlatform, isTrackMatched, trackKey } from '@/lib/platforms'
+import { pluralize } from '@/lib/format'
 
 const props = defineProps({
   tracks: {
     type: Array,
-    required: true
+    required: true,
   },
   targetPlatform: {
     type: String,
-    required: true
-  }
+    required: true,
+  },
+  activeKey: {
+    type: String,
+    default: '',
+  },
+  isPlaying: {
+    type: Boolean,
+    default: false,
+  },
 })
 
-// Get only tracks with valid URLs
-const availableTracks = computed(() => {
-  return props.tracks.filter(track => getTrackUrl(track) !== null)
-})
+defineEmits(['play-track'])
 
-const availableCount = computed(() => availableTracks.value.length)
-
-// Generate playlist URL based on platform
-const playlistUrl = computed(() => {
-  const trackIds = availableTracks.value
-    .map(track => {
-      const idKey = `${props.targetPlatform}_id`
-      return track[idKey]
-    })
-    .filter(id => id)
-  
-  if (trackIds.length === 0) return null
-  
-  switch (props.targetPlatform) {
-    case 'spotify':
-      if (trackIds.length === 1) {
-        return `https://open.spotify.com/track/${trackIds[0]}`
-      }
-      return `https://open.spotify.com/track/${trackIds[0]}`
-    
-    case 'apple_music':
-      if (trackIds.length > 0) {
-        return `https://music.apple.com/us/song/${trackIds[0]}`
-      }
-      return null
-    
-    case 'youtube_music':
-      if (trackIds.length === 1) {
-        return `https://music.youtube.com/watch?v=${trackIds[0]}`
-      }
-      const videoIds = trackIds.join(',')
-      return `https://music.youtube.com/watch?v=${trackIds[0]}&list=RD${trackIds[0]}`
-    
-    default:
-      return null
-  }
-})
-
-function getTrackUrl(track) {
-  const urlKey = `${props.targetPlatform}_url`
-  if (track[urlKey]) {
-    return track[urlKey]
-  }
-  
-  const idKey = `${props.targetPlatform}_id`
-  const trackId = track[idKey]
-  
-  if (!trackId) return null
-  
-  switch (props.targetPlatform) {
-    case 'apple_music':
-      return `https://music.apple.com/us/song/${trackId}`
-    
-    case 'spotify':
-      return `https://open.spotify.com/track/${trackId}`
-    
-    case 'youtube_music':
-      return `https://music.youtube.com/watch?v=${trackId}`
-    
-    default:
-      return null
-  }
-}
-
-function getPlatformIcon(platform) {
-  const icons = {
-    'spotify': Disc,
-    'apple_music': Music,
-    'youtube_music': Youtube
-  }
-  return icons[platform] || Music
-}
-
-function getPlatformName(platform) {
-  const names = {
-    'spotify': 'Spotify',
-    'apple_music': 'Apple Music',
-    'youtube_music': 'YouTube Music'
-  }
-  return names[platform] || platform
-}
-
-const canPlayQueue = computed(() => {
-  return ['apple_music', 'youtube_music'].includes(props.targetPlatform)
-})
-
-function trackPlayClick(track, index) {
-  if (canPlayQueue.value) {
-    emit('play-track', index)
-  } else {
-    window.open(getTrackUrl(track), '_blank')
-  }
-}
-
-const emit = defineEmits(['play-all', 'play-track'])
-
+const platform = computed(() => getPlatform(props.targetPlatform))
+const canPlayInApp = computed(() => platform.value.canPlayInApp)
+const playableCount = computed(
+  () => props.tracks.filter((track) => canPlayTrack(track, props.targetPlatform)).length,
+)
 </script>
 
 <style scoped>
-.playable-track-list {
-  background: var(--mantine-color-dark-6); /* Surface */
-  border-radius: 8px; /* Mantine Radius MD */
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 15px -5px rgba(0,0,0,0.1);
-  border: 1px solid #373A40;
+.playable-list {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
 }
 
-.header {
+.list-head {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #373A40;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--divider);
 }
 
-.header-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.header-title {
-  margin: 0;
-  color: var(--mantine-color-gray-0);
-  font-size: 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.header-icon {
-  width: 24px;
-  height: 24px;
-  color: var(--mantine-color-grape-9);
-}
-
-.play-all-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: var(--mantine-color-grape-9);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.play-all-button:hover {
-  background: var(--mantine-color-grape-7);
-}
-
-.btn-icon {
-  width: 16px;
-  height: 16px;
-}
-
-.platform-badge {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  background: var(--mantine-color-dark-7);
-  color: var(--mantine-color-gray-5);
-  border: 1px solid #373A40;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.badge-icon {
-  width: 16px;
-  height: 16px;
-}
-
-.list-container {
-  max-height: 500px;
-  overflow-y: auto;
-  margin-bottom: 24px;
-}
-
-.track-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px;
-  margin-bottom: 8px;
-  background: transparent;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-  border: 1px solid transparent;
-}
-
-.track-item:hover {
-  background: var(--mantine-color-dark-7);
-  border-color: #373A40;
-}
-
-.track-item.unavailable {
-  opacity: 0.5;
-}
-
-.track-number {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--mantine-color-gray-5);
-  min-width: 30px;
-  text-align: center;
-}
-
-.track-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.track-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--mantine-color-gray-0);
+.eyebrow {
   margin-bottom: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--text-faint);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
 }
 
-.track-artist {
-  font-size: 0.875rem;
-  color: var(--mantine-color-gray-5);
+.list-title h2 {
+  font-size: var(--text-lg);
 }
 
-.track-album {
-  font-size: 0.75rem;
-  color: #5c5f66;
-  margin-top: 2px;
+.head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding-top: 2px;
 }
 
-.track-actions {
-  min-width: 100px;
-  text-align: right;
-}
-
-.play-button {
+.target-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  background: rgba(134, 46, 156, 0.1);
-  color: var(--mantine-color-grape-7);
-  text-decoration: none;
-  border-radius: 4px;
-  font-weight: 600;
-  font-size: 0.875rem;
-  transition: all 0.2s;
+  padding: 3px 9px 3px 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
 }
 
-.play-button:hover {
-  background: rgba(134, 46, 156, 0.2);
+.head-note {
+  color: var(--text-faint);
+  font-size: var(--text-2xs);
+  white-space: nowrap;
 }
 
-.action-icon {
-  width: 14px;
-  height: 14px;
+.platform-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-bottom: var(--space-3);
+  padding: 8px 10px;
+  border: 1px solid var(--info-border);
+  border-radius: var(--radius-sm);
+  background: var(--info-bg);
+  color: var(--blue-800);
+  font-size: var(--text-xs);
 }
 
-.unavailable-text {
-  color: #5c5f66;
-  font-size: 0.875rem;
-  font-style: italic;
+.platform-note.is-warning {
+  border-color: var(--warning-border);
+  background: var(--warning-bg);
+  color: var(--warning-strong);
 }
 
-.summary {
-  text-align: center;
-  padding-top: 20px;
-  border-top: 1px solid #373A40;
+.platform-note svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
 }
 
-.summary p {
-  color: var(--mantine-color-gray-5);
-  margin-bottom: 16px;
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.summary strong {
-  color: var(--mantine-color-gray-0);
+.list-footnote {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--divider);
+  color: var(--text-faint);
+  font-size: var(--text-2xs);
 }
 
-.open-playlist-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: var(--mantine-color-green-9); /* Green for action */
-  color: white;
-  text-decoration: none;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  font-weight: 600;
-  transition: background-color 0.2s;
-  cursor: pointer;
+@media (max-width: 720px) {
+  .list-head {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .head-actions {
+    justify-content: flex-start;
+    padding-top: 0;
+  }
 }
 
-.open-playlist-button:hover {
-  background: var(--mantine-color-green-7);
-}
-
-.help-text {
-  font-size: 0.875rem;
-  color: #5c5f66;
-}
-
-/* Custom scrollbar */
-.list-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.list-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.list-container::-webkit-scrollbar-thumb {
-  background: #373A40;
-  border-radius: 3px;
+@media (max-width: 560px) {
+  .playable-list {
+    padding: var(--space-3);
+  }
 }
 </style>
