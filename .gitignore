@@ -4,6 +4,7 @@
 .env
 .env.*
 !.env.example
+!aux_share/.env.production
 *.pem
 *.key
 *.p12
@@ -90,4 +91,4 @@ DECISIONS.md
 FRONTEND_REDESIGN.md
 LIVE_VERIFICATION.md
 PHASE5_RESEARCH.md
-test_report.tx
+test_report.txt

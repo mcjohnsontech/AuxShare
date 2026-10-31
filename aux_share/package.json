@@ -4,7 +4,7 @@
   "description": "Convert playlists between Spotify, Apple Music and YouTube Music, then share one link.",
   "private": true,
   "type": "module",
-  "homepage": "https://auxshare.netlify.app",
+  "homepage": "https://aux-share.vercel.app",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },

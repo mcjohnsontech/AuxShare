@@ -96,7 +96,9 @@ def test_get_session_characterization():
         assert len(data["tracks"]) == 1
 
 def test_get_session_not_found_characterization():
-    with patch.object(main.session_manager, "get_session", return_value=None):
+    with patch.object(main.session_manager, "get_session", return_value=None), \
+         patch.object(main.session_manager.redis_client, "incr", return_value=1), \
+         patch.object(main.session_manager.redis_client, "expire", return_value=True):
         resp = client.get("/api/session/9999")
         assert resp.status_code == 404
 

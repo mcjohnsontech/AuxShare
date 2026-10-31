@@ -16,7 +16,8 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  VITE_SITE_URL = "https://auxshare.netlify.app"
+  VITE_SITE_URL = "https://aux-share.vercel.app"
+  VITE_API_URL = "https://auxshare-api-40b1a9433585.herokuapp.com"
 
 # Vue Router history mode: serve index.html for client-side routes.
 [[redirects]]

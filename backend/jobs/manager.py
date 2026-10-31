@@ -13,12 +13,17 @@ from .models import ConversionJob, JobTrack, JobStatus, JobTrackStatus
 class JobManager:
     def __init__(self, redis_client=None):
         if redis_client is None:
-            self.redis = redis.Redis(
-                host=os.getenv("REDIS_HOST", "localhost"),
-                port=int(os.getenv("REDIS_PORT", "6379")),
-                db=int(os.getenv("REDIS_DB", "0")),
-                decode_responses=True
-            )
+            redis_url = os.getenv("REDIS_URL")
+            if redis_url:
+                ssl_kwargs = {"ssl_cert_reqs": None} if redis_url.startswith("rediss://") else {}
+                self.redis = redis.from_url(redis_url, decode_responses=True, **ssl_kwargs)
+            else:
+                self.redis = redis.Redis(
+                    host=os.getenv("REDIS_HOST", "localhost"),
+                    port=int(os.getenv("REDIS_PORT", "6379")),
+                    db=int(os.getenv("REDIS_DB", "0")),
+                    decode_responses=True
+                )
         else:
             self.redis = redis_client
     

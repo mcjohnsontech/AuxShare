@@ -159,7 +159,7 @@ The test suite runs entirely against local fixtures and mocks. No Spotify, YouTu
 | `COOKIE_SECURE` | Production | Set `true` when served over HTTPS. |
 | `COOKIE_SAMESITE` | No | `lax` (default), `strict`, or `none`. |
 | `AUXSHARE_ENCRYPTION_KEYS` | Production | Comma-separated Fernet key(s) for OAuth token encryption. Required in production. |
-| `VITE_SITE_URL` | No | Canonical origin for Open Graph, Twitter and JSON-LD. Defaults to `https://auxshare.netlify.app`. |
+| `VITE_SITE_URL` | No | Canonical origin for Open Graph, Twitter and JSON-LD. Defaults to `https://aux-share.vercel.app`. |
 | `VITE_API_URL` | No | Absolute API URL. Leave empty when `/api` is proxied. |
 
 Never commit `.env`. Only `.env.example` belongs in version control.
@@ -169,13 +169,45 @@ Never commit `.env`. Only `.env.example` belongs in version control.
 1. Create an application in the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
 2. Under **Redirect URIs**, add:
    - Local: `http://127.0.0.1:8000/api/auth/callback`
-   - Production: `https://api.yourdomain.com/api/auth/callback`
+   - Production: `https://auxshare-api-40b1a9433585.herokuapp.com/api/auth/callback`
 3. Copy the client ID and secret into `SPOTIPY_CLIENT_ID` and `SPOTIPY_CLIENT_SECRET`.
 4. Set `SPOTIFY_REDIRECT_URI` to match the registered callback exactly.
 
 > **Note:** Spotify rejects `localhost` in redirect URIs — use `127.0.0.1` for local development.
 
 ## Production deployment
+
+### Production: Vercel frontend and Heroku backend
+
+- Frontend: https://aux-share.vercel.app
+- Backend: https://auxshare-api-40b1a9433585.herokuapp.com
+
+In Vercel, set the root directory to `aux_share`, framework to Vite, build
+command to `npm run build`, and output directory to `dist`.
+`aux_share/.env.production` contains the public production build URLs. Any
+Vercel environment variables override these values, so update existing
+`VITE_SITE_URL` and `VITE_API_URL` variables to match, then redeploy.
+
+Set these Heroku Config Vars (the local `.env` is not uploaded to Heroku):
+
+```dotenv
+ENVIRONMENT=production
+FRONTEND_URL=https://aux-share.vercel.app
+BACKEND_URL=https://auxshare-api-40b1a9433585.herokuapp.com
+SPOTIFY_REDIRECT_URI=https://auxshare-api-40b1a9433585.herokuapp.com/api/auth/callback
+COOKIE_SECURE=true
+COOKIE_SAMESITE=none
+```
+
+Keep Spotify credentials, `REDIS_URL`, and `AUXSHARE_ENCRYPTION_KEYS` in Heroku
+Config Vars. Register the exact `SPOTIFY_REDIRECT_URI` above in the Spotify
+Developer Dashboard. Deploy from the repository root using the existing
+`Procfile` for the web and worker processes.
+
+Docker retains its same-origin nginx API proxy and explicitly builds with an
+empty `VITE_API_URL`. For local development, use the `.env.local` values above;
+use localhost frontend/backend URLs and development cookie settings in your
+local backend environment.
 
 ### Frontend on Netlify
 
@@ -190,7 +222,7 @@ Set `VITE_SITE_URL` in Netlify to your production domain. To proxy the API on th
 ```toml
 [[redirects]]
   from = "/api/*"
-  to = "https://api.yourdomain.com/api/:splat"
+  to = "https://auxshare-api-40b1a9433585.herokuapp.com/api/:splat"
   status = 200
   force = true
 ```
