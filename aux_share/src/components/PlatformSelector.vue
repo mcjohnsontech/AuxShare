@@ -11,7 +11,7 @@
         v-for="option in platforms"
         :key="option.name"
         class="platform-option"
-        :class="{ 'is-selected': modelValue === option.name }"
+        :class="{ 'is-selected': modelValue === option.name, 'is-disabled': isSource(option.name) || disabled }"
       >
         <input
           class="sr-only"
@@ -19,12 +19,13 @@
           name="destination-platform"
           :value="option.name"
           :checked="modelValue === option.name"
+          :disabled="isSource(option.name) || disabled"
           @change="$emit('update:modelValue', option.name)"
         />
         <PlatformMark :platform="option.name" />
         <span class="option-copy">
           <span class="option-name">{{ platformName(option) }}</span>
-          <span class="option-note">{{ platformNote(option.name) }}</span>
+          <span class="option-note">{{ isSource(option.name) ? 'Already your source platform' : platformNote(option.name) }}</span>
         </span>
         <span class="option-check" aria-hidden="true">
           <Check :size="13" />
@@ -41,7 +42,9 @@ import api from '@/services/api'
 import PlatformMark from './PlatformMark.vue'
 import { PLATFORMS, getPlatform } from '@/lib/platforms'
 
-defineProps({
+const props = defineProps({
+  sourcePlatform: { type: String, default: '' },
+  disabled: { type: Boolean, default: false },
   modelValue: {
     type: String,
     default: 'youtube_music',
@@ -77,6 +80,10 @@ function fallbackPlatforms() {
 
 function platformName(option) {
   return getPlatform(option.name).name || option.display_name || option.name
+}
+
+function isSource(name) {
+  return Boolean(props.sourcePlatform) && getPlatform(name).key === getPlatform(props.sourcePlatform).key
 }
 
 function platformNote(name) {
@@ -116,7 +123,7 @@ function platformNote(name) {
     box-shadow var(--dur-1) var(--ease-out);
 }
 
-.platform-option:hover {
+.platform-option:not(.is-disabled):hover {
   border-color: var(--border-strong);
   background: var(--surface-2);
 }
@@ -125,6 +132,12 @@ function platformNote(name) {
   border-color: var(--blue-500);
   background: var(--blue-50);
   box-shadow: 0 0 0 1px var(--blue-500);
+}
+
+.platform-option.is-disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  background: var(--surface-2);
 }
 
 /* Keyboard ring lives on the visible tile, not the visually hidden input. */

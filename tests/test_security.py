@@ -209,7 +209,15 @@ def test_csrf_origin_check_blocks_untrusted_origins():
     assert "CSRF" in resp.json()["detail"]
 
 
-def test_csrf_origin_check_allows_trusted_origins():
+@pytest.fixture
+def isolated_conversion_jobs():
+    # These CSRF tests exercise routing, not Redis-backed job persistence.
+    with patch("main.job_manager") as jobs, patch("main.job_queue"):
+        jobs.create_job.return_value.id = "security-test-job"
+        yield
+
+
+def test_csrf_origin_check_allows_trusted_origins(isolated_conversion_jobs):
     fake_tracks = [{"title": "Song", "artist": "Artist", "id": "1"}]
     fake_result = {
         "source_platform": "Spotify",
@@ -243,7 +251,7 @@ def test_csrf_missing_origin_and_referer_with_session_cookie_rejected():
     assert "CSRF" in resp.json()["detail"]
 
 
-def test_csrf_missing_origin_and_referer_without_session_cookie_allowed():
+def test_csrf_missing_origin_and_referer_without_session_cookie_allowed(isolated_conversion_jobs):
     """Pure API call with no session cookie passes through CSRF middleware."""
     fake_result = {
         "source_platform": "Spotify",
@@ -364,8 +372,10 @@ def test_oauth_state_from_different_session_rejected():
 # Cookie flags
 # ---------------------------------------------------------------------------
 
-def test_callback_sets_correct_cookie_flags():
+def test_callback_sets_correct_cookie_flags(monkeypatch):
     """Successful callback must set httpOnly + SameSite=lax cookie."""
+    monkeypatch.setenv("COOKIE_SECURE", "false")
+    monkeypatch.setenv("COOKIE_SAMESITE", "lax")
     mock_redis, store = _make_mock_redis()
     sm, state = _setup_login_and_get_state(mock_redis, store)
 

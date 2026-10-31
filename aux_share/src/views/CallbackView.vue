@@ -31,6 +31,7 @@ import { onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { Loader2 } from 'lucide-vue-next'
 import { API_BASE_URL } from '@/services/api'
+import { takeSpotifyReturnPath } from '@/lib/spotifyExportState'
 
 const router = useRouter()
 const route = useRoute()
@@ -50,13 +51,7 @@ async function adoptSession(handoff) {
 }
 
 function goBack() {
-  const returnPath = localStorage.getItem('auth_return_path')
-  if (returnPath) {
-    localStorage.removeItem('auth_return_path')
-    router.push(returnPath)
-  } else {
-    router.push('/')
-  }
+  router.replace(takeSpotifyReturnPath(localStorage))
 }
 
 onMounted(async () => {

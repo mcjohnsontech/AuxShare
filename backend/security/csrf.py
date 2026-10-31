@@ -10,7 +10,7 @@ _SESSION_COOKIE_NAME = "aux_session"
 
 class CSRFProtector:
     """
-    CSRF Defense using Origin and Referer validation plus optional CSRF tokens.
+    CSRF defense using trusted Origin and Referer validation.
     Protects state-changing endpoints when using browser session cookies.
     """
     def __init__(self, allowed_origins: Optional[List[str]] = None):
@@ -52,14 +52,8 @@ class CSRFProtector:
 
         origin = request.headers.get("origin")
         referer = request.headers.get("referer")
-        sec_fetch_site = request.headers.get("sec-fetch-site")
-
-        # Browser explicitly flags cross-site requests
-        # if sec_fetch_site == "cross-site":
-        #     raise HTTPException(
-        #         status_code=status.HTTP_403_FORBIDDEN,
-        #         detail="CSRF Protection: Cross-site requests are rejected."
-        #     )
+        # Vercel and Heroku are different sites; trust the configured origins
+        # rather than rejecting every request marked cross-site by the browser.
 
         # Check Origin header
         if origin:

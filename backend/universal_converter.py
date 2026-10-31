@@ -46,6 +46,12 @@ class UniversalConverter:
         if not target_platform:
             raise ValueError(f"Unsupported target platform: {target_platform_name}")
         
+        if source_platform_info['name'] == target_platform.name:
+            raise ValueError(
+                f"This playlist is already on {source_platform_info['display_name']}. "
+                "Choose a different destination platform."
+            )
+
         print(f"Converting from {source_platform_info['display_name']} to {target_platform.name}")
         
         # Step 4: Extract playlist from source

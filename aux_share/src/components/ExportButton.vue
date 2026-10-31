@@ -70,6 +70,7 @@ import {
 } from 'lucide-vue-next'
 import PlatformMark from './PlatformMark.vue'
 import { API_BASE_URL } from '@/services/api'
+import { beginSpotifyExport, pendingExportKey } from '@/lib/spotifyExportState'
 
 const props = defineProps({
   sessionCode: {
@@ -87,7 +88,6 @@ const playlistTrackCount = ref(0)
 const statusMessage = ref('')
 const statusType = ref('info')
 const failedOnce = ref(false)
-const pendingExportKey = 'spotify_pending_export_session'
 
 const buttonLabel = computed(() => {
   if (checkingStatus.value) return 'Checking Spotify…'
@@ -111,8 +111,7 @@ function applyExported(data) {
 }
 
 async function initiateLogin() {
-  localStorage.setItem('auth_return_path', window.location.pathname)
-  localStorage.setItem(pendingExportKey, props.sessionCode)
+  beginSpotifyExport(localStorage, props.sessionCode)
   statusMessage.value = 'Taking you to Spotify to authorize…'
   statusType.value = 'info'
   try {
@@ -219,6 +218,11 @@ onMounted(async () => {
   }
 
   if (localStorage.getItem(pendingExportKey) === props.sessionCode) {
+    if (authenticated.value === false) {
+      statusMessage.value = 'Your Spotify session could not be restored. Connect Spotify again to finish exporting this playlist.'
+      statusType.value = 'error'
+      return
+    }
     void handleExport()
   }
 })

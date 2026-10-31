@@ -73,10 +73,11 @@
           <span class="step-number" aria-hidden="true">2</span>
           <div>
             <h3>Destination</h3>
-            <p>We find the closest match in that catalogue.</p>
+            <p v-if="detected">Choose a different app from {{ detectedName }}.</p>
+            <p v-else>We find the closest match in that catalogue.</p>
           </div>
         </div>
-        <PlatformSelector v-model="targetPlatform" />
+        <PlatformSelector v-model="targetPlatform" :source-platform="detected || ''" :disabled="busy" />
       </div>
 
       <button type="submit" class="submit-button" :disabled="!canSubmit" :aria-busy="busy">
@@ -110,7 +111,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import {
   AlertCircle,
   ArrowRight,
@@ -142,8 +143,12 @@ const busy = computed(() => playlistStore.loading)
 const detectedName = computed(() => getPlatform(detected.value).name)
 
 const canSubmit = computed(
-  () => !busy.value && playlistUrl.value.trim().length > 0 && Boolean(targetPlatform.value),
+  () => !busy.value && playlistUrl.value.trim().length > 0 && Boolean(targetPlatform.value) && targetPlatform.value !== detected.value,
 )
+
+watch([detected, targetPlatform], ([source, target]) => {
+  if (source && source === target) targetPlatform.value = ''
+}, { flush: 'sync' })
 
 const describedBy = computed(() => {
   const ids = []
@@ -218,6 +223,11 @@ async function handleSubmit() {
   if (result.error) {
     validationError.value = result.error
     urlInput.value?.focus()
+    return
+  }
+
+  if (!targetPlatform.value || result.platform === targetPlatform.value) {
+    submitError.value = 'Choose a different destination platform from your playlist’s source.'
     return
   }
 
