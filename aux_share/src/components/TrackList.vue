@@ -1,180 +1,247 @@
-<!-- src/components/TrackList.vue -->
-
 <template>
-  <div class="track-list">
-    <h3>🎵 Tracks ({{ tracks.length }})</h3>
-    
-    <div class="list-container">
-      <div 
-        v-for="(track, index) in tracks" 
-        :key="index"
-        class="track-item"
-        :class="{ 'not-matched': !isMatched(track) }"
-      >
-        <div class="track-number">{{ index + 1 }}</div>
-        
-        <div class="track-info">
-          <div class="track-title">{{ track.title }}</div>
-          <div class="track-artist">{{ track.artist }}</div>
-          <div class="track-album">{{ track.album }}</div>
-        </div>
-        
-        <div class="track-status">
-          <span v-if="isMatched(track)" class="status-badge success">
-            ✓ Matched
-          </span>
-          <span v-else class="status-badge error">
-            ✗ Not Found
-          </span>
-          
-          <div v-if="getConfidence(track)" class="confidence">
-            {{ (getConfidence(track) * 100).toFixed(0) }}% confidence
-          </div>
+  <section class="track-list" aria-labelledby="tracks-heading">
+    <div class="list-head">
+      <div class="list-title">
+        <p class="eyebrow">{{ pluralize(tracks.length, 'track') }} in this playlist</p>
+        <h2 id="tracks-heading">Converted tracks</h2>
+      </div>
+
+      <div class="list-tools">
+        <span class="target-chip">
+          <PlatformMark :platform="targetPlatform" size="sm" />
+          <span>{{ platform.name }}</span>
+        </span>
+
+        <div v-if="failedCount > 0" class="filters" role="group" aria-label="Filter the track list">
+          <button
+            v-for="option in filterOptions"
+            :key="option.value"
+            type="button"
+            class="filter-button"
+            :class="{ 'is-active': filter === option.value }"
+            :aria-pressed="filter === option.value"
+            @click="filter = option.value"
+          >
+            {{ option.label }}
+            <span class="filter-count tabular">{{ option.count }}</span>
+          </button>
         </div>
       </div>
     </div>
-  </div>
+
+    <ol v-if="visibleTracks.length" class="rows">
+      <TrackRow
+        v-for="entry in visibleTracks"
+        :key="`${trackKey(entry.track, targetPlatform)}-${entry.index}`"
+        :track="entry.track"
+        :index="entry.index + 1"
+        :platform="targetPlatform"
+        show-status
+      />
+    </ol>
+
+    <p v-else class="empty-filter">
+      {{ emptyMessage }}
+    </p>
+
+    <p class="list-footnote">
+      Track titles open the matched song on {{ platform.name }} in a new tab when the service supplies a link.
+    </p>
+  </section>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import TrackRow from './TrackRow.vue'
+import PlatformMark from './PlatformMark.vue'
+import { getPlatform, isTrackMatched, trackKey } from '@/lib/platforms'
+import { pluralize } from '@/lib/format'
 
 const props = defineProps({
   tracks: {
     type: Array,
-    required: true
+    required: true,
   },
   targetPlatform: {
     type: String,
-    default: 'youtube_music'
-  }
+    required: true,
+  },
 })
 
-function isMatched(track) {
-  const idKey = `${props.targetPlatform}_id`
-  return !!track[idKey]
-}
+const filter = ref('all')
+const platform = computed(() => getPlatform(props.targetPlatform))
 
-function getConfidence(track) {
-  const confidenceKey = `${props.targetPlatform}_confidence`
-  return track[confidenceKey] || 0
-}
+const matchedCount = computed(
+  () => props.tracks.filter((track) => isTrackMatched(track, props.targetPlatform)).length,
+)
+const failedCount = computed(() => props.tracks.length - matchedCount.value)
+
+const filterOptions = computed(() => [
+  { value: 'all', label: 'All', count: props.tracks.length },
+  { value: 'matched', label: 'Matched', count: matchedCount.value },
+  { value: 'unmatched', label: 'Not found', count: failedCount.value },
+])
+
+const visibleTracks = computed(() => {
+  const entries = props.tracks.map((track, index) => ({ track, index }))
+  if (filter.value === 'matched') {
+    return entries.filter((entry) => isTrackMatched(entry.track, props.targetPlatform))
+  }
+  if (filter.value === 'unmatched') {
+    return entries.filter((entry) => !isTrackMatched(entry.track, props.targetPlatform))
+  }
+  return entries
+})
+
+const emptyMessage = computed(() => {
+  if (!props.tracks.length) return 'No tracks were saved with this conversion.'
+  if (filter.value === 'matched') return 'No tracks matched on this service.'
+  if (filter.value === 'unmatched') return 'No unmatched tracks — everything was found.'
+  return 'No tracks to show.'
+})
 </script>
 
 <style scoped>
 .track-list {
-  margin: 30px 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
 }
 
-h3 {
-  margin-bottom: 20px;
-  color: #333;
-}
-
-.list-container {
-  max-height: 500px;
-  overflow-y: auto;
-  padding-right: 10px;
-}
-
-.track-item {
+.list-head {
   display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--divider);
+}
+
+.eyebrow {
+  margin-bottom: 2px;
+  color: var(--text-faint);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.list-title h2 {
+  font-size: var(--text-lg);
+}
+
+.list-tools {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 15px;
-  padding: 15px;
-  margin-bottom: 10px;
-  background: white;
-  border: 2px solid #e0e0e0;
-  border-radius: 12px;
-  transition: all 0.3s;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding-top: 2px;
 }
 
-.track-item:hover {
-  border-color: #667eea;
-  transform: translateX(5px);
+.target-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px 3px 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
 }
 
-.track-item.not-matched {
-  opacity: 0.6;
-  border-color: #fcc;
+.filters {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
 }
 
-.track-number {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #999;
-  min-width: 30px;
+.filter-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  transition:
+    background var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out);
+}
+
+.filter-button:hover {
+  color: var(--text);
+}
+
+.filter-button.is-active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-xs);
+}
+
+.filter-button:focus-visible {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 1px;
+}
+
+.filter-count {
+  color: var(--text-faint);
+  font-weight: var(--weight-regular);
+  font-variant-numeric: tabular-nums;
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.empty-filter {
+  padding: var(--space-6) var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
   text-align: center;
 }
 
-.track-info {
-  flex: 1;
-  min-width: 0;
+.list-footnote {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--divider);
+  color: var(--text-faint);
+  font-size: var(--text-2xs);
 }
 
-.track-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+@media (max-width: 720px) {
+  .list-head {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .list-tools {
+    justify-content: flex-start;
+    padding-top: 0;
+  }
+
+  .filters {
+    max-width: 100%;
+    overflow-x: auto;
+  }
 }
 
-.track-artist {
-  font-size: 0.95rem;
-  color: #666;
-  margin-bottom: 3px;
-}
-
-.track-album {
-  font-size: 0.85rem;
-  color: #999;
-}
-
-.track-status {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 5px;
-}
-
-.status-badge {
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.status-badge.success {
-  background: #d4edda;
-  color: #155724;
-}
-
-.status-badge.error {
-  background: #f8d7da;
-  color: #721c24;
-}
-
-.confidence {
-  font-size: 0.8rem;
-  color: #666;
-}
-
-/* Custom scrollbar */
-.list-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.list-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.list-container::-webkit-scrollbar-thumb {
-  background: #667eea;
-  border-radius: 4px;
+@media (max-width: 560px) {
+  .track-list {
+    padding: var(--space-3);
+  }
 }
 </style>

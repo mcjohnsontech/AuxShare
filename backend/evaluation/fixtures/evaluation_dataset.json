@@ -1,0 +1,899 @@
+[
+  {
+    "id": "spot_1",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Blinding Lights",
+      "artist": "The Weeknd",
+      "artists": "The Weeknd",
+      "album": "After Hours",
+      "isrc": "USUG11904206",
+      "spotify_id": "0VjIjW4GlUZAMYd2vXMi3b",
+      "duration_ms": 200040
+    },
+    "expected_target_id": "yt_blinding_lights",
+    "expected_is_match": true,
+    "flags": [
+      "standard"
+    ],
+    "failure_category": null,
+    "split": "tuning"
+  },
+  {
+    "id": "spot_2",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "As It Was",
+      "artist": "Harry Styles",
+      "artists": "Harry Styles",
+      "album": "Harry's House",
+      "isrc": "USSM12200612",
+      "spotify_id": "4LRPiXqCikLlN15c3yImP7",
+      "duration_ms": 167303
+    },
+    "expected_target_id": "yt_as_it_was",
+    "expected_is_match": true,
+    "flags": [
+      "standard"
+    ],
+    "failure_category": null,
+    "split": "tuning"
+  },
+  {
+    "id": "spot_3",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "bad guy",
+      "artist": "Billie Eilish",
+      "artists": "Billie Eilish",
+      "album": "WHEN WE ALL FALL ASLEEP, WHERE DO WE GO?",
+      "isrc": "USUM71900764",
+      "spotify_id": "2Fxmhks0bxGSBdJ92vM42m",
+      "duration_ms": 194087
+    },
+    "expected_target_id": "yt_bad_guy",
+    "expected_is_match": true,
+    "flags": [
+      "standard"
+    ],
+    "failure_category": null,
+    "split": "held_out"
+  },
+  {
+    "id": "spot_4",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Levitating (feat. DaBaby)",
+      "artist": "Dua Lipa",
+      "artists": "Dua Lipa",
+      "album": "Future Nostalgia",
+      "isrc": "GBAHT2000570",
+      "spotify_id": "463CkQjx2Zk1yXoBuierM9",
+      "duration_ms": 203064
+    },
+    "expected_target_id": "yt_levitating_dababy",
+    "expected_is_match": true,
+    "flags": [
+      "featured_artist"
+    ],
+    "failure_category": "featured_artist_formatting",
+    "split": "tuning"
+  },
+  {
+    "id": "spot_5",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "STAY (with Justin Bieber)",
+      "artist": "The Kid LAROI",
+      "artists": "The Kid LAROI",
+      "album": "F*CK LOVE 3: OVERKILL",
+      "isrc": "USSM12104193",
+      "spotify_id": "5PjdY0CKGZdErtk25b9Te1",
+      "duration_ms": 141805
+    },
+    "expected_target_id": "yt_stay_laroi",
+    "expected_is_match": true,
+    "flags": [
+      "featured_artist"
+    ],
+    "failure_category": "featured_artist_formatting",
+    "split": "tuning"
+  },
+  {
+    "id": "spot_6",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Anti-Hero",
+      "artist": "Taylor Swift",
+      "artists": "Taylor Swift",
+      "album": "Midnights",
+      "isrc": "USUG12205736",
+      "spotify_id": "0V3wPSX9ygBnKi895g6un2",
+      "duration_ms": 200690
+    },
+    "expected_target_id": "yt_anti_hero",
+    "expected_is_match": true,
+    "flags": [
+      "explicit_clean"
+    ],
+    "failure_category": null,
+    "split": "held_out"
+  },
+  {
+    "id": "spot_7",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Save Your Tears",
+      "artist": "The Weeknd",
+      "artists": "The Weeknd",
+      "album": "After Hours",
+      "isrc": "USUG12000658",
+      "spotify_id": "5QO792alxAvOag4JJujExu",
+      "duration_ms": 215626
+    },
+    "expected_target_id": "yt_save_your_tears",
+    "expected_is_match": true,
+    "flags": [
+      "standard"
+    ],
+    "failure_category": null,
+    "split": "tuning"
+  },
+  {
+    "id": "spot_8",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "INDUSTRY BABY (feat. Jack Harlow)",
+      "artist": "Lil Nas X",
+      "artists": "Lil Nas X",
+      "album": "MONTERO",
+      "isrc": "USSM12103953",
+      "spotify_id": "27NovPIUIRrOZoCHxABJwK",
+      "duration_ms": 212000
+    },
+    "expected_target_id": "yt_industry_baby",
+    "expected_is_match": true,
+    "flags": [
+      "featured_artist"
+    ],
+    "failure_category": "featured_artist_formatting",
+    "split": "tuning"
+  },
+  {
+    "id": "spot_9",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Heat Waves",
+      "artist": "Glass Animals",
+      "artists": "Glass Animals",
+      "album": "Dreamland",
+      "isrc": "GBUM72000478",
+      "spotify_id": "02MWAaffLxlfxAUY7c5dvx",
+      "duration_ms": 238805
+    },
+    "expected_target_id": "yt_heat_waves",
+    "expected_is_match": true,
+    "flags": [
+      "standard"
+    ],
+    "failure_category": null,
+    "split": "held_out"
+  },
+  {
+    "id": "spot_10",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Starboy",
+      "artist": "The Weeknd",
+      "artists": "The Weeknd",
+      "album": "Starboy",
+      "isrc": "USUG11601728",
+      "spotify_id": "7MXVkk9YM5IZxh0CF5kj9m",
+      "duration_ms": 230453
+    },
+    "expected_target_id": "yt_starboy",
+    "expected_is_match": true,
+    "flags": [
+      "featured_artist"
+    ],
+    "failure_category": null,
+    "split": "tuning"
+  },
+  {
+    "id": "rem_1",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Hey Jude - 2015 Remaster",
+      "artist": "The Beatles",
+      "artists": "The Beatles",
+      "album": "1 (2015 Version)",
+      "isrc": "GBAYE0601498",
+      "spotify_id": "0aym2LBJBk9DAYcragUTIO",
+      "duration_ms": 425653
+    },
+    "expected_target_id": "yt_hey_jude_2015",
+    "expected_is_match": true,
+    "flags": [
+      "remaster"
+    ],
+    "failure_category": "remaster",
+    "split": "tuning"
+  },
+  {
+    "id": "rem_2",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Comfortably Numb - 2011 Remastered Version",
+      "artist": "Pink Floyd",
+      "artists": "Pink Floyd",
+      "album": "The Wall",
+      "isrc": "GBAHT1100140",
+      "spotify_id": "7rPzNYCgm3UcLWql7KTQgK",
+      "duration_ms": 382296
+    },
+    "expected_target_id": "yt_comfortably_numb_2011",
+    "expected_is_match": true,
+    "flags": [
+      "remaster"
+    ],
+    "failure_category": "remaster",
+    "split": "held_out"
+  },
+  {
+    "id": "rem_3",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Stairway to Heaven - Remaster",
+      "artist": "Led Zeppelin",
+      "artists": "Led Zeppelin",
+      "album": "Led Zeppelin IV",
+      "isrc": "USEE10000080",
+      "spotify_id": "5CQ30WqJwcep0pYcV4AMNc",
+      "duration_ms": 482830
+    },
+    "expected_target_id": "yt_stairway_to_heaven",
+    "expected_is_match": true,
+    "flags": [
+      "remaster"
+    ],
+    "failure_category": "remaster",
+    "split": "tuning"
+  },
+  {
+    "id": "rem_4",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Bohemian Rhapsody - 2011 Mix",
+      "artist": "Queen",
+      "artists": "Queen",
+      "album": "A Night At The Opera",
+      "isrc": "GBUM71029604",
+      "spotify_id": "4u7EnebtmKWzUH433cf5Qv",
+      "duration_ms": 354320
+    },
+    "expected_target_id": "yt_bohemian_rhapsody_2011",
+    "expected_is_match": true,
+    "flags": [
+      "remaster"
+    ],
+    "failure_category": "remaster",
+    "split": "tuning"
+  },
+  {
+    "id": "rem_5",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Hotel California - 2013 Remaster",
+      "artist": "Eagles",
+      "artists": "Eagles",
+      "album": "Hotel California",
+      "isrc": "USRE10600204",
+      "spotify_id": "40riOy7x9W7FXImmEdAhAn",
+      "duration_ms": 391376
+    },
+    "expected_target_id": "yt_hotel_california_studio",
+    "expected_is_match": true,
+    "flags": [
+      "remaster"
+    ],
+    "failure_category": "remaster",
+    "split": "held_out"
+  },
+  {
+    "id": "rem_6",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "So What",
+      "artist": "Miles Davis",
+      "artists": "Miles Davis",
+      "album": "Kind of Blue",
+      "isrc": "USSM10000451",
+      "spotify_id": "0jVRdAg0Dcx6O6bC4l9zsm",
+      "duration_ms": 565000
+    },
+    "expected_target_id": "yt_so_what",
+    "expected_is_match": true,
+    "flags": [
+      "standard"
+    ],
+    "failure_category": null,
+    "split": "tuning"
+  },
+  {
+    "id": "rem_7",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Time - 2023 Remaster",
+      "artist": "Pink Floyd",
+      "artists": "Pink Floyd",
+      "album": "The Dark Side of the Moon (50th Anniversary)",
+      "isrc": "GBAHT2300053",
+      "spotify_id": "3TO7mRINzk4hgbev1Zw6bv",
+      "duration_ms": 425386
+    },
+    "expected_target_id": "yt_time_pink_floyd",
+    "expected_is_match": true,
+    "flags": [
+      "remaster"
+    ],
+    "failure_category": "remaster",
+    "split": "tuning"
+  },
+  {
+    "id": "rem_8",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "\"Heroes\" - 2017 Remaster",
+      "artist": "David Bowie",
+      "artists": "David Bowie",
+      "album": "\"Heroes\"",
+      "isrc": "GBAYE1700683",
+      "spotify_id": "7Jh1bpe7tiTK5J92neNgZe",
+      "duration_ms": 371413
+    },
+    "expected_target_id": "yt_heroes_bowie",
+    "expected_is_match": true,
+    "flags": [
+      "remaster"
+    ],
+    "failure_category": "remaster",
+    "split": "held_out"
+  },
+  {
+    "id": "nl_1",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "夜に駆ける",
+      "artist": "YOASOBI",
+      "artists": "YOASOBI",
+      "album": "THE BOOK",
+      "isrc": "JPVI02000008",
+      "spotify_id": "3dPtXM1400AcGQeu69Pt6Q",
+      "duration_ms": 261013
+    },
+    "expected_target_id": "yt_yoru_ni_kakeru",
+    "expected_is_match": true,
+    "flags": [
+      "non_latin_script"
+    ],
+    "failure_category": "non_latin_script",
+    "split": "tuning"
+  },
+  {
+    "id": "nl_2",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "봄날",
+      "artist": "방탄소년단",
+      "artists": "방탄소년단",
+      "album": "YOU NEVER WALK ALONE",
+      "isrc": "KRA381700010",
+      "spotify_id": "0jJipR1n1W4Yl9GzN2zL4b",
+      "duration_ms": 274389
+    },
+    "expected_target_id": "yt_spring_day_bts",
+    "expected_is_match": true,
+    "flags": [
+      "non_latin_script"
+    ],
+    "failure_category": "non_latin_script",
+    "split": "tuning"
+  },
+  {
+    "id": "nl_3",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Группа крови",
+      "artist": "Кино",
+      "artists": "Кино",
+      "album": "Группа крови",
+      "isrc": "RUA600300008",
+      "spotify_id": "4L1b8t2wU6jO4zK9Z6Qe4f",
+      "duration_ms": 285000
+    },
+    "expected_target_id": "yt_gruppa_krovi",
+    "expected_is_match": true,
+    "flags": [
+      "non_latin_script"
+    ],
+    "failure_category": "non_latin_script",
+    "split": "held_out"
+  },
+  {
+    "id": "nl_4",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "تملي معاك",
+      "artist": "عمرو دياب",
+      "artists": "عمرو دياب",
+      "album": "تملي معاك",
+      "isrc": "EGE010000014",
+      "spotify_id": "5k8F5sW8F5z8s9d8s7f6g5",
+      "duration_ms": 269000
+    },
+    "expected_target_id": "yt_tamally_maak",
+    "expected_is_match": true,
+    "flags": [
+      "non_latin_script"
+    ],
+    "failure_category": "non_latin_script",
+    "split": "tuning"
+  },
+  {
+    "id": "nl_5",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Despacito",
+      "artist": "Luis Fonsi, Daddy Yankee",
+      "artists": "Luis Fonsi",
+      "album": "VIDA",
+      "isrc": "USUM71700494",
+      "spotify_id": "6habFhsOp2NvshLv26DqMb",
+      "duration_ms": 228200
+    },
+    "expected_target_id": "yt_despacito",
+    "expected_is_match": true,
+    "flags": [
+      "featured_artist"
+    ],
+    "failure_category": null,
+    "split": "tuning"
+  },
+  {
+    "id": "nl_6",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "怪物",
+      "artist": "YOASOBI",
+      "artists": "YOASOBI",
+      "album": "THE BOOK 2",
+      "isrc": "JPVI02100001",
+      "spotify_id": "06XQvnJ75LVRIoIHSO0mPn",
+      "duration_ms": 205844
+    },
+    "expected_target_id": "yt_kaibutsu_yoasobi",
+    "expected_is_match": true,
+    "flags": [
+      "non_latin_script"
+    ],
+    "failure_category": "non_latin_script",
+    "split": "held_out"
+  },
+  {
+    "id": "nl_7",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Dynamite",
+      "artist": "BTS",
+      "artists": "BTS",
+      "album": "BE",
+      "isrc": "USUM72009228",
+      "spotify_id": "5QDLhrAO0j0D42Ue4kbpLz",
+      "duration_ms": 199053
+    },
+    "expected_target_id": "yt_dynamite_bts",
+    "expected_is_match": true,
+    "flags": [
+      "standard"
+    ],
+    "failure_category": null,
+    "split": "tuning"
+  },
+  {
+    "id": "yt_src_1",
+    "source_platform": "youtube_music",
+    "target_platform": "spotify",
+    "source_track": {
+      "title": "Blinding Lights (Official Music Video)",
+      "artist": "The Weeknd",
+      "artists": "The Weeknd",
+      "album": "",
+      "youtube_music_id": "4NRXx6U8ABQ",
+      "duration_ms": 262000
+    },
+    "expected_target_id": "0VjIjW4GlUZAMYd2vXMi3b",
+    "expected_is_match": true,
+    "flags": [
+      "youtube_noise"
+    ],
+    "failure_category": "youtube_noise",
+    "split": "tuning"
+  },
+  {
+    "id": "yt_src_2",
+    "source_platform": "youtube_music",
+    "target_platform": "spotify",
+    "source_track": {
+      "title": "Coldplay - Yellow (Official Audio)",
+      "artist": "Coldplay",
+      "artists": "Coldplay",
+      "album": "Parachutes",
+      "youtube_music_id": "yKNxeF4KMsY",
+      "duration_ms": 269000
+    },
+    "expected_target_id": "3AJwUDP919kvQ9QcozQPxg",
+    "expected_is_match": true,
+    "flags": [
+      "youtube_noise"
+    ],
+    "failure_category": "youtube_noise",
+    "split": "held_out"
+  },
+  {
+    "id": "yt_src_3",
+    "source_platform": "youtube_music",
+    "target_platform": "spotify",
+    "source_track": {
+      "title": "Another One Bites the Dust - Topic",
+      "artist": "Queen",
+      "artists": "Queen",
+      "album": "The Game",
+      "youtube_music_id": "rY0WxgSXdEE",
+      "duration_ms": 215000
+    },
+    "expected_target_id": "57JVGBtBLCfHw2umBs44x2",
+    "expected_is_match": true,
+    "flags": [
+      "youtube_noise"
+    ],
+    "failure_category": "youtube_noise",
+    "split": "tuning"
+  },
+  {
+    "id": "yt_src_4",
+    "source_platform": "youtube_music",
+    "target_platform": "spotify",
+    "source_track": {
+      "title": "Don't Start Now (Lyrics)",
+      "artist": "Dua Lipa",
+      "artists": "Dua Lipa",
+      "album": "",
+      "youtube_music_id": "oygrmJFKYZY",
+      "duration_ms": 183000
+    },
+    "expected_target_id": "6WrI0LAC5M1Rw2MnX2ZvEg",
+    "expected_is_match": true,
+    "flags": [
+      "youtube_noise"
+    ],
+    "failure_category": "youtube_noise",
+    "split": "tuning"
+  },
+  {
+    "id": "yt_src_5",
+    "source_platform": "youtube_music",
+    "target_platform": "spotify",
+    "source_track": {
+      "title": "Easy On Me (Official Lyric Video)",
+      "artist": "Adele",
+      "artists": "Adele",
+      "album": "30",
+      "youtube_music_id": "U3ASj1L6_sY",
+      "duration_ms": 224000
+    },
+    "expected_target_id": "0gXvzg43iMffxU6mFmX6dY",
+    "expected_is_match": true,
+    "flags": [
+      "youtube_noise"
+    ],
+    "failure_category": "youtube_noise",
+    "split": "held_out"
+  },
+  {
+    "id": "yt_src_6",
+    "source_platform": "youtube_music",
+    "target_platform": "spotify",
+    "source_track": {
+      "title": "Believer (Audio)",
+      "artist": "Imagine Dragons",
+      "artists": "Imagine Dragons",
+      "album": "Evolve",
+      "youtube_music_id": "7wtfhZwyrcc",
+      "duration_ms": 204000
+    },
+    "expected_target_id": "0pqnGHJpmpxLKifKRmU6WP",
+    "expected_is_match": true,
+    "flags": [
+      "youtube_noise"
+    ],
+    "failure_category": "youtube_noise",
+    "split": "tuning"
+  },
+  {
+    "id": "appl_src_1",
+    "source_platform": "apple_music",
+    "target_platform": "spotify",
+    "source_track": {
+      "title": "Flowers",
+      "artist": "Miley Cyrus",
+      "artists": "Miley Cyrus",
+      "album": "Endless Summer Vacation",
+      "isrc": "USSM12209777",
+      "apple_music_id": "1663973555",
+      "duration_ms": 200442
+    },
+    "expected_target_id": "0yLdNVWF3Srea0uzk55zFn",
+    "expected_is_match": true,
+    "flags": [
+      "standard"
+    ],
+    "failure_category": null,
+    "split": "tuning"
+  },
+  {
+    "id": "appl_src_2",
+    "source_platform": "apple_music",
+    "target_platform": "spotify",
+    "source_track": {
+      "title": "vampire",
+      "artist": "Olivia Rodrigo",
+      "artists": "Olivia Rodrigo",
+      "album": "GUTS",
+      "isrc": "USUG12304987",
+      "apple_music_id": "1694386825",
+      "duration_ms": 219724
+    },
+    "expected_target_id": "3k79jB4aGmM2ABHgvhcvZ5",
+    "expected_is_match": true,
+    "flags": [
+      "standard"
+    ],
+    "failure_category": null,
+    "split": "held_out"
+  },
+  {
+    "id": "appl_src_3",
+    "source_platform": "apple_music",
+    "target_platform": "spotify",
+    "source_track": {
+      "title": "Cruel Summer",
+      "artist": "Taylor Swift",
+      "artists": "Taylor Swift",
+      "album": "Lover",
+      "isrc": "USUG11901472",
+      "apple_music_id": "1468058165",
+      "duration_ms": 178426
+    },
+    "expected_target_id": "1BxfuPKGuaTgP7aM0fbdwr",
+    "expected_is_match": true,
+    "flags": [
+      "standard"
+    ],
+    "failure_category": null,
+    "split": "tuning"
+  },
+  {
+    "id": "appl_src_4",
+    "source_platform": "apple_music",
+    "target_platform": "spotify",
+    "source_track": {
+      "title": "Calm Down",
+      "artist": "Rema",
+      "artists": "Rema",
+      "album": "Rave & Roses",
+      "isrc": "NGA552200001",
+      "apple_music_id": "1613009581",
+      "duration_ms": 219306
+    },
+    "expected_target_id": "0DwP118m4hEcl2e7k7G64k",
+    "expected_is_match": true,
+    "flags": [
+      "standard"
+    ],
+    "failure_category": null,
+    "split": "tuning"
+  },
+  {
+    "id": "appl_src_5",
+    "source_platform": "apple_music",
+    "target_platform": "spotify",
+    "source_track": {
+      "title": "Daylight",
+      "artist": "David Kushner",
+      "artists": "David Kushner",
+      "album": "Daylight - Single",
+      "isrc": "QZHN62369809",
+      "apple_music_id": "1678857413",
+      "duration_ms": 212953
+    },
+    "expected_target_id": "1odExZTJTHviYYZGyeaaHm",
+    "expected_is_match": true,
+    "flags": [
+      "standard"
+    ],
+    "failure_category": null,
+    "split": "held_out"
+  },
+  {
+    "id": "neg_1",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Hotel California - Live On MTV, 1994",
+      "artist": "Eagles",
+      "artists": "Eagles",
+      "album": "Hell Freezes Over",
+      "isrc": "USGF19400012",
+      "spotify_id": "2woAlhS41w7mD7M9uL0q7R",
+      "duration_ms": 432000
+    },
+    "expected_target_id": "yt_hotel_california_live",
+    "expected_is_match": false,
+    "flags": [
+      "live"
+    ],
+    "failure_category": "live_vs_studio",
+    "split": "tuning"
+  },
+  {
+    "id": "neg_2",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Levitating (The Blessed Madonna Remix)",
+      "artist": "Dua Lipa",
+      "artists": "Dua Lipa",
+      "album": "Club Future Nostalgia",
+      "isrc": "GBAHT2000780",
+      "spotify_id": "7a9f8q8w7e6r5t4y3u2i1o",
+      "duration_ms": 250000
+    },
+    "expected_target_id": "yt_levitating_remix",
+    "expected_is_match": false,
+    "flags": [
+      "remix"
+    ],
+    "failure_category": "remix_penalty",
+    "split": "tuning"
+  },
+  {
+    "id": "neg_3",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Hurt",
+      "artist": "Johnny Cash",
+      "artists": "Johnny Cash",
+      "album": "American IV: The Man Comes Around",
+      "isrc": "USIR10200547",
+      "spotify_id": "28cnXtME493VZ9SpwKJHGx",
+      "duration_ms": 218000
+    },
+    "expected_target_id": "yt_hurt_cash",
+    "expected_is_match": true,
+    "flags": [
+      "cover"
+    ],
+    "failure_category": null,
+    "split": "held_out"
+  },
+  {
+    "id": "neg_4",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Creep - Acoustic",
+      "artist": "Radiohead",
+      "artists": "Radiohead",
+      "album": "My Iron Lung EP",
+      "isrc": "GBAYE9400062",
+      "spotify_id": "3ndGg0pYjW8eU9fH7z4b1a",
+      "duration_ms": 259000
+    },
+    "expected_target_id": "yt_creep_acoustic",
+    "expected_is_match": false,
+    "flags": [
+      "acoustic"
+    ],
+    "failure_category": "live_vs_studio",
+    "split": "tuning"
+  },
+  {
+    "id": "neg_5",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Smells Like Teen Spirit - Sped Up",
+      "artist": "Nirvana",
+      "artists": "Nirvana",
+      "album": "TikTok Remixes",
+      "isrc": null,
+      "spotify_id": "0v8g7h6f5d4s3a2z1x9c8v",
+      "duration_ms": 195000
+    },
+    "expected_target_id": null,
+    "expected_is_match": false,
+    "flags": [
+      "sped_up"
+    ],
+    "failure_category": "remix_penalty",
+    "split": "tuning"
+  },
+  {
+    "id": "neg_6",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Completely Nonexistent Song XYZ123987",
+      "artist": "Ghost Band 999",
+      "artists": "Ghost Band 999",
+      "album": "No Album",
+      "isrc": "ZZ9999999999",
+      "spotify_id": "999nonexistent",
+      "duration_ms": 180000
+    },
+    "expected_target_id": null,
+    "expected_is_match": false,
+    "flags": [
+      "missing"
+    ],
+    "failure_category": "genuinely_missing",
+    "split": "held_out"
+  },
+  {
+    "id": "neg_7",
+    "source_platform": "spotify",
+    "target_platform": "youtube_music",
+    "source_track": {
+      "title": "Bohemian Rhapsody - Karaoke Version",
+      "artist": "Ameritz Karaoke",
+      "artists": "Ameritz Karaoke",
+      "album": "Karaoke Hits",
+      "isrc": "GBABC0900123",
+      "spotify_id": "888karaoke",
+      "duration_ms": 355000
+    },
+    "expected_target_id": null,
+    "expected_is_match": false,
+    "flags": [
+      "karaoke"
+    ],
+    "failure_category": "remix_penalty",
+    "split": "tuning"
+  }
+]

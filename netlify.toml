@@ -1,0 +1,65 @@
+# Netlify configuration for the AuxShare frontend.
+#
+# The FastAPI backend and Redis run separately (Docker Compose, Render, Fly.io,
+# or any host). Two supported setups:
+#
+# 1. Same-origin API (recommended): uncomment the /api/* proxy below and point
+#    it at your backend. Leave VITE_API_URL empty so the browser calls /api on
+#    the Netlify origin.
+# 2. Cross-origin API: set VITE_API_URL in the Netlify UI to the backend URL,
+#    set FRONTEND_URL/COOKIE_SECURE on the backend, and keep the proxy disabled.
+
+[build]
+  base = "aux_share"
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  VITE_SITE_URL = "https://auxshare.netlify.app"
+
+# Vue Router history mode: serve index.html for client-side routes.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Uncomment after replacing the host with your public backend origin.
+# [[redirects]]
+#   from = "/api/*"
+#   to = "https://your-backend.example.com/api/:splat"
+#   status = 200
+#   force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/og-image.png"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/favicon.ico"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/favicon.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/apple-touch-icon.png"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"

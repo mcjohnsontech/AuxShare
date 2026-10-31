@@ -1,0 +1,226 @@
+/*
+ * AuxShare design tokens.
+ *
+ * One source of truth for colour, type, space, radius, elevation, motion and
+ * control sizing. Legacy aliases (--blue-*, --text, --border, --surface, …)
+ * are kept so older components keep working, but new UI should use the
+ * semantic names below.
+ */
+:root {
+  color-scheme: light;
+
+  /* ---- Brand -------------------------------------------------------- */
+  --blue-50: #eef4ff;
+  --blue-100: #dce8ff;
+  --blue-200: #c3d6ff;
+  --blue-300: #8db2ff;
+  --blue-400: #5c8bff;
+  --blue-500: #2f6bff;
+  --blue-600: #1f56e0;
+  --blue-700: #1743b3;
+  --blue-800: #13368c;
+  --blue-900: #0b1f4d;
+
+  --brand: var(--blue-500);
+  --brand-strong: var(--blue-600);
+  --brand-stronger: var(--blue-700);
+  --brand-soft: var(--blue-50);
+  --brand-soft-strong: var(--blue-100);
+  --brand-contrast: #ffffff;
+
+  /* ---- Neutral surfaces / ink --------------------------------------- */
+  --bg: #f6f7fb;
+  --bg-subtle: #eef1f8;
+  --bg-raised: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f4f6fc;
+  --surface-3: #eaeff9;
+
+  /* Deep "stage" surfaces: now playing, share card, player. */
+  --ink: #0b1226;
+  --ink-2: #111b35;
+  --ink-3: #1a2745;
+  --on-ink: #f5f7fd;
+  --on-ink-muted: #a8b4d1;
+  --on-ink-faint: #8592b3;
+  --on-ink-line: #263351;
+
+  --text: #0b1532;
+  --text-muted: #4a5878;
+  --text-faint: #5d6b85;
+  --text-inverse: #ffffff;
+
+  --border: #e2e7f1;
+  --border-strong: #c8d2e4;
+  --divider: #edf0f7;
+
+  /* ---- Semantic ------------------------------------------------------ */
+  --success: #0e7a46;
+  --success-strong: #0a6036;
+  --success-bg: #e8f6ee;
+  --success-border: #bfe6cf;
+
+  --warning: #8a5200;
+  --warning-strong: #6f4200;
+  --warning-bg: #fff4de;
+  --warning-border: #f3dcaa;
+
+  --danger: #b42318;
+  --danger-strong: #8f1c13;
+  --danger-bg: #feeceb;
+  --danger-border: #f5c6c2;
+
+  --info: var(--blue-700);
+  --info-bg: var(--blue-50);
+  --info-border: var(--blue-100);
+
+  /* ---- Platform identity -------------------------------------------- */
+  --platform-spotify: #0b6b34;
+  --platform-spotify-strong: #1db954;
+  --platform-spotify-soft: #e6f7ec;
+  --platform-apple: #b3123a;
+  --platform-apple-strong: #fa243c;
+  --platform-apple-soft: #fdecef;
+  --platform-youtube: #b3121f;
+  --platform-youtube-strong: #ff0033;
+  --platform-youtube-soft: #feecee;
+  --platform-unknown: var(--text-muted);
+  --platform-unknown-soft: var(--surface-2);
+
+  /* ---- Type ---------------------------------------------------------- */
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
+
+  --text-2xs: 0.6875rem;  /* 11px */
+  --text-xs: 0.75rem;     /* 12px */
+  --text-sm: 0.8125rem;   /* 13px */
+  --text-base: 0.9375rem; /* 15px */
+  --text-md: 1rem;        /* 16px */
+  --text-lg: 1.125rem;    /* 18px */
+  --text-xl: 1.375rem;    /* 22px */
+  --text-2xl: 1.75rem;    /* 28px */
+  --text-3xl: clamp(2rem, 1.35rem + 2.6vw, 3.15rem);
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.3;
+  --leading-body: 1.55;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --tracking-display: -0.035em;
+  --tracking-tight: -0.015em;
+  --tracking-wide: 0.08em;
+
+  /* ---- Space --------------------------------------------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  /* ---- Radii --------------------------------------------------------- */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+
+  /* ---- Elevation ----------------------------------------------------- */
+  --shadow-subtle: 0 1px 2px rgba(11, 21, 50, 0.04);
+  --shadow-xs: 0 1px 2px rgba(11, 21, 50, 0.05), 0 1px 1px rgba(11, 21, 50, 0.03);
+  --shadow: 0 1px 2px rgba(11, 21, 50, 0.05), 0 8px 24px -12px rgba(11, 21, 50, 0.18);
+  --shadow-md: 0 2px 4px rgba(11, 21, 50, 0.05), 0 16px 40px -16px rgba(11, 21, 50, 0.25);
+  --shadow-lift: 0 24px 64px -24px rgba(4, 10, 26, 0.55);
+  --focus-ring: 0 0 0 3px rgba(47, 107, 255, 0.35);
+  --focus-color: var(--blue-600);
+
+  /* ---- Motion -------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-1: 120ms;
+  --dur-2: 180ms;
+  --dur-3: 260ms;
+
+  /* ---- Controls / layout --------------------------------------------- */
+  --control-sm: 36px;
+  --control: 44px;
+  --control-lg: 52px;
+  --container: 1080px;
+  --container-narrow: 760px;
+  --page-gutter: clamp(16px, 4vw, 32px);
+  --header-height: 64px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  color: var(--text);
+  line-height: var(--leading-tight);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--blue-600);
+  text-underline-offset: 3px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.container {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 var(--page-gutter);
+}
+
+.container-narrow {
+  max-width: var(--container-narrow);
+  margin: 0 auto;
+  padding: 0 var(--page-gutter);
+}

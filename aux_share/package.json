@@ -1,8 +1,10 @@
 {
-  "name": "aux_share",
-  "version": "0.0.0",
+  "name": "auxshare",
+  "version": "1.0.0",
+  "description": "Convert playlists between Spotify, Apple Music and YouTube Music, then share one link.",
   "private": true,
   "type": "module",
+  "homepage": "https://auxshare.netlify.app",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },

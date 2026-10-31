@@ -1,167 +1,371 @@
 <template>
-  <button 
-    class="export-button" 
-    @click="handleExport"
-    :disabled="isExporting"
-  >
-    <div v-if="isExporting" class="content">
-      <Loader2 class="icon spin" />
-      <span>Creating Playlist...</span>
+  <section class="export-panel" aria-labelledby="export-heading">
+    <div class="export-head">
+      <p class="export-eyebrow">
+        <PlatformMark platform="spotify" size="sm" />
+        <span id="export-heading">Spotify export</span>
+      </p>
+      <p class="export-desc">
+        Save the matched tracks as a new playlist in your own Spotify account.
+      </p>
     </div>
-    <div v-else class="content">
-      <!-- <img src="@/assets/spotify-icon-white.png" class="icon-img" v-if="hasIcon" /> -->
-      <span>Export to Spotify</span>
+
+    <div class="export-actions">
+      <a
+        v-if="exported && playlistUrl"
+        class="open-playlist"
+        :href="playlistUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <ExternalLink :size="16" aria-hidden="true" />
+        Open playlist<span v-if="playlistTrackCount" class="count"> · {{ playlistTrackCount }} tracks</span>
+      </a>
+
+      <span v-if="exported" class="exported-chip">
+        <CheckCircle2 :size="15" aria-hidden="true" />
+        Exported
+      </span>
+
+      <button
+        v-else
+        type="button"
+        class="export-button"
+        :disabled="checkingStatus || isExporting"
+        :aria-busy="isExporting"
+        @click="handleExport"
+      >
+        <Loader2 v-if="checkingStatus || isExporting" :size="16" class="spin" aria-hidden="true" />
+        <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" fill="currentColor" opacity="0.16" />
+          <path d="M7.6 9.4c3.2-.9 6.5-.5 9.1 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          <path d="M8.2 12.5c2.6-.7 5.2-.4 7.3.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          <path d="M8.8 15.5c2-.5 4-.3 5.6.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+        <span>{{ buttonLabel }}</span>
+      </button>
     </div>
-  </button>
-  
-  <p v-if="statusMessage" :class="['status-msg', statusType]">
-    {{ statusMessage }}
-  </p>
+
+    <p
+      v-if="statusMessage"
+      class="export-message"
+      :class="`is-${statusType}`"
+      :role="statusType === 'error' ? 'alert' : 'status'"
+      aria-live="polite"
+    >
+      {{ statusMessage }}
+    </p>
+    <p v-else-if="showConnectHint" class="export-hint">
+      You will be sent to Spotify to authorize, then brought back here to finish the export.
+    </p>
+  </section>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { Loader2 } from 'lucide-vue-next'
-import { usePlaylistStore } from '@/stores/playlist'
+import { computed, onMounted, ref } from 'vue'
+import {
+  CheckCircle2,
+  ExternalLink,
+  Loader2,
+} from 'lucide-vue-next'
+import PlatformMark from './PlatformMark.vue'
+import { API_BASE_URL } from '@/services/api'
 
 const props = defineProps({
   sessionCode: {
     type: String,
-    required: true
-  }
+    required: true,
+  },
 })
 
-const playlistStore = usePlaylistStore()
 const isExporting = ref(false)
+const checkingStatus = ref(true)
+const exported = ref(false)
+const authenticated = ref(null)
+const playlistUrl = ref('')
+const playlistTrackCount = ref(0)
 const statusMessage = ref('')
 const statusType = ref('info')
-const hasIcon = ref(false) // Placeholder until we verify asset
+const failedOnce = ref(false)
+const pendingExportKey = 'spotify_pending_export_session'
+
+const buttonLabel = computed(() => {
+  if (checkingStatus.value) return 'Checking Spotify…'
+  if (isExporting.value) return 'Creating playlist…'
+  if (failedOnce.value) return 'Try export again'
+  if (authenticated.value === false) return 'Connect Spotify to export'
+  return 'Export to Spotify'
+})
+
+const showConnectHint = computed(
+  () => !exported.value && !checkingStatus.value && !isExporting.value && authenticated.value === false,
+)
+
+function applyExported(data) {
+  exported.value = true
+  authenticated.value = true
+  playlistUrl.value = data.playlist_url || playlistUrl.value
+  if (typeof data.tracks_in_playlist === 'number') {
+    playlistTrackCount.value = data.tracks_in_playlist
+  }
+}
+
+async function initiateLogin() {
+  localStorage.setItem('auth_return_path', window.location.pathname)
+  localStorage.setItem(pendingExportKey, props.sessionCode)
+  statusMessage.value = 'Taking you to Spotify to authorize…'
+  statusType.value = 'info'
+  try {
+    // Start OAuth on the backend origin: the state cookie is bound to that
+    // origin, and the browser must hold it when Spotify redirects back.
+    const cfgRes = await fetch(`${API_BASE_URL}/api/config`)
+    const cfg = await cfgRes.json().catch(() => ({}))
+    const startUrl = cfg.auth_start_url || `${API_BASE_URL}/api/auth/start`
+    window.location.href = startUrl
+  } catch (error) {
+    console.error(error)
+    localStorage.removeItem(pendingExportKey)
+    failedOnce.value = true
+    statusMessage.value = 'Spotify sign-in could not be started. Check your connection and try again.'
+    statusType.value = 'error'
+  }
+}
+
+async function checkExportStatus() {
+  checkingStatus.value = true
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/api/export/status?session_code=${encodeURIComponent(props.sessionCode)}&target_platform=spotify`,
+      { credentials: 'include' },
+    )
+    if (res.ok) {
+      const data = await res.json()
+      authenticated.value = typeof data.authenticated === 'boolean' ? data.authenticated : null
+      if (data.exported) {
+        applyExported(data)
+        statusMessage.value = ''
+      }
+    }
+  } catch (error) {
+    // Status is only a convenience gate; never block exporting on it.
+    console.error(error)
+  } finally {
+    checkingStatus.value = false
+  }
+}
 
 async function handleExport() {
-  const token = localStorage.getItem('spotify_access_token')
-  
-  if (!token) {
-    // Start Auth Flow
-    // Save current path to return to
-    localStorage.setItem('auth_return_path', window.location.pathname)
-    
-    // Get Auth URL from backend
-    try {
-      const res = await fetch('http://localhost:8000/api/auth/login')
-      const data = await res.json()
-      window.location.href = data.url
-    } catch (e) {
-      console.error(e)
-      statusMessage.value = "Failed to start login"
-      statusType.value = "error"
-    }
-    return
-  }
-  
-  // Have token, try export
+  if (exported.value || isExporting.value || checkingStatus.value) return
+
+  // Purge any legacy token from localStorage.
+  localStorage.removeItem('spotify_access_token')
+
   isExporting.value = true
-  statusMessage.value = "Creating your playlist..."
-  statusType.value = "info"
-  
+  failedOnce.value = false
+  statusMessage.value = 'Creating your Spotify playlist…'
+  statusType.value = 'info'
+
   try {
-    const res = await fetch('http://localhost:8000/api/export', {
+    const res = await fetch(`${API_BASE_URL}/api/export`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({
         session_code: props.sessionCode,
         target_platform: 'spotify',
-        access_token: token
-      })
+      }),
     })
-    
-    if (!res.ok) {
-      if (res.status === 401) {
-        // Token expired? Clear and retry (simple recursive logic or just ask user)
-        localStorage.removeItem('spotify_access_token')
-        statusMessage.value = "Session expired. Please click again to re-login."
-        statusType.value = "error"
-        isExporting.value = false
-        return
-      }
-      throw new Error("Export failed")
+
+    if (res.status === 401) {
+      await initiateLogin()
+      return
     }
-    
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}))
+      throw new Error(errData.detail || 'The playlist could not be created.')
+    }
+
     const data = await res.json()
-    statusMessage.value = `✅ Created! ${data.tracks_added} tracks added.`
-    statusType.value = "success"
-    
-    // Open the new playlist
-    window.open(data.playlist_url, '_blank')
-    
-  } catch (e) {
-    console.error(e)
-    statusMessage.value = "Failed to create playlist."
-    statusType.value = "error"
+    if (data.already_existed) {
+      statusMessage.value = `This playlist was already exported (${data.tracks_in_playlist} tracks). Opening the existing one.`
+    } else {
+      const failed = data.failed || 0
+      statusMessage.value =
+        failed > 0
+          ? `Playlist created with ${data.tracks_added} of ${data.tracks_requested} tracks. ${failed} could not be found.`
+          : `Playlist created with all ${data.tracks_added} tracks.`
+    }
+    statusType.value = 'success'
+    localStorage.removeItem(pendingExportKey)
+    applyExported(data)
+  } catch (error) {
+    console.error(error)
+    failedOnce.value = true
+    statusMessage.value =
+      error?.message || 'The Spotify playlist could not be created. Check your connection and try again.'
+    statusType.value = 'error'
   } finally {
     isExporting.value = false
   }
 }
+
+onMounted(async () => {
+  await checkExportStatus()
+
+  if (exported.value) {
+    localStorage.removeItem(pendingExportKey)
+    return
+  }
+
+  if (localStorage.getItem(pendingExportKey) === props.sessionCode) {
+    void handleExport()
+  }
+})
 </script>
 
 <style scoped>
+.export-panel {
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.export-head {
+  margin-bottom: var(--space-3);
+}
+
+.export-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+}
+
+.export-desc {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .export-button {
-  background: #1DB954; /* Spotify Brand Color */
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 50px; /* Pill shape */
-  font-weight: 700;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
-  box-shadow: 0 4px 15px rgba(29, 185, 84, 0.4);
-  display: inline-block;
-  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid #19a34a;
+  border-radius: var(--radius-pill);
+  background: #1db954;
+  color: #062310;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  transition:
+    background var(--dur-1) var(--ease-out),
+    transform var(--dur-1) var(--ease-out);
 }
 
 .export-button:hover:not(:disabled) {
-  background: #1ed760;
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 6px 20px rgba(29, 185, 84, 0.6);
+  background: #24cc5f;
+}
+
+.export-button:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .export-button:disabled {
-  opacity: 0.7;
-  cursor: wait;
+  opacity: 0.62;
 }
 
-.content {
-  display: flex;
+.export-button:focus-visible {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+}
+
+.open-playlist {
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid #19a34a;
+  border-radius: var(--radius-pill);
+  background: #e6f7ec;
+  color: #07542a;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+  text-decoration: none;
+  transition: background var(--dur-1) var(--ease-out);
 }
 
-.icon {
-  width: 20px;
-  height: 20px;
+.open-playlist:hover {
+  background: #d3f1df;
 }
 
-.icon-img {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
+.open-playlist:focus-visible {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
 }
 
-.spin {
-  animation: spin 1s linear infinite;
+.open-playlist .count {
+  font-weight: var(--weight-medium);
+  opacity: 0.8;
 }
 
-.status-msg {
-  margin-top: 10px;
-  font-size: 0.9rem;
-  font-weight: 500;
+.exported-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid var(--success-border);
+  border-radius: var(--radius-pill);
+  background: var(--success-bg);
+  color: var(--success-strong);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
 }
 
-.status-msg.error { color: #ff6b6b; }
-.status-msg.success { color: #1DB954; }
-.status-msg.info { color: var(--mantine-color-gray-5); }
+.export-message {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+}
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.export-message.is-success {
+  color: var(--success-strong);
+}
+
+.export-message.is-error {
+  color: var(--danger-strong);
+}
+
+.export-message.is-info {
+  color: var(--text-muted);
+}
+
+.export-hint {
+  margin-top: var(--space-2);
+  color: var(--text-faint);
+  font-size: var(--text-2xs);
+  line-height: 1.45;
+}
+
+@media (max-width: 420px) {
+  .export-button,
+  .open-playlist {
+    width: 100%;
+    justify-content: center;
+  }
 }
 </style>

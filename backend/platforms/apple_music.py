@@ -33,15 +33,15 @@ class AppleMusicPlatform(MusicPlatform):
     
     def get_playlist_tracks(self, playlist_id: str) -> List[Dict]:
         """
-        Fetch playlist tracks
+        Fetch playlist tracks.
         
-        Note: Not supported with free iTunes API
-        Would require MusicKit ($99/year)
+        Note: Extracting Apple Music playlists requires MusicKit credentials
+        (Apple Developer Program membership). When credentials are configured,
+        the MusicKit client implementation can be dropped in here without changing the core pipeline.
         """
-        raise NotImplementedError(
-            "❌ Extracting Apple Music playlists requires MusicKit credentials ($99/year).\n"
-            "💡 Solution: Use Spotify or YouTube Music as your source platform instead!\n"
-            "   You can still convert TO Apple Music for free."
+        raise ValueError(
+            "Apple Music playlist extraction is not supported yet (requires Apple MusicKit developer credentials). "
+            "Please use Spotify, YouTube Music, or Manual Import as your source platform."
         )
     
     def search_by_isrc(self, isrc: str) -> Optional[Dict]:
@@ -123,6 +123,34 @@ class AppleMusicPlatform(MusicPlatform):
             }
         
         return None
+
+    def search_candidates(self, title: str, artist: str, limit: int = 10) -> List[Dict]:
+        """Return iTunes candidates, including links/previews for the UI."""
+        results = self.client.search_multiple(title, artist, limit=limit)
+        if not results:
+            simplified_title = self._simplify_title(title)
+            simplified_artist = self._simplify_artist(artist)
+            if simplified_title != title or simplified_artist != artist:
+                results = self.client.search_multiple(
+                    simplified_title, simplified_artist, limit=limit
+                )
+
+        candidates: List[Dict] = []
+        for result in results or []:
+            candidates.append({
+                'id': result.get('apple_music_id') or result.get('id'),
+                'title': result.get('title', ''),
+                'artists': [result.get('artist')] if result.get('artist') else [],
+                'album': result.get('album', ''),
+                'duration_ms': result.get('duration_ms'),
+                'url': result.get('apple_music_url'),
+                'apple_music_url': result.get('apple_music_url'),
+                'preview_url': result.get('preview_url'),
+                'artwork_url': result.get('artwork_url'),
+                'raw': result,
+            })
+        return candidates
+
     
     def generate_playback_link(self, track_ids: List[str]) -> str:
         """
@@ -202,5 +230,5 @@ if __name__ == "__main__":
     print("Test: Trying to extract playlist (should fail with helpful message)")
     try:
         platform.get_playlist_tracks("pl.abc123")
-    except NotImplementedError as e:
+    except ValueError as e:
         print(f"Expected error: {e}")

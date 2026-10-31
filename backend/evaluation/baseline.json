@@ -1,0 +1,55 @@
+{
+  "summary": {
+    "total_tracks": 43,
+    "true_positives": 23,
+    "false_positives": 7,
+    "false_negatives": 11,
+    "true_negatives": 2,
+    "match_rate": 0.6976744186046512,
+    "precision": 0.7666666666666667,
+    "recall": 0.6764705882352942
+  },
+  "by_source_platform": {
+    "spotify": {
+      "total": 32,
+      "tp": 23,
+      "fp": 4,
+      "fn": 3,
+      "tn": 2,
+      "match_rate": 0.84375,
+      "precision": 0.8518518518518519
+    },
+    "youtube_music": {
+      "total": 6,
+      "tp": 0,
+      "fp": 0,
+      "fn": 6,
+      "tn": 0,
+      "match_rate": 0.0,
+      "precision": 0.0
+    },
+    "apple_music": {
+      "total": 5,
+      "tp": 0,
+      "fp": 3,
+      "fn": 2,
+      "tn": 0,
+      "match_rate": 0.6,
+      "precision": 0.0
+    }
+  },
+  "failure_taxonomy": {
+    "non_latin_script": 3,
+    "youtube_noise": 6,
+    "unclassified": 5,
+    "live_vs_studio": 2,
+    "remix_penalty": 2
+  },
+  "fixture_provenance": {
+    "source_type": "hybrid_live_and_synthetic",
+    "live_spotify_queries": 17,
+    "live_itunes_queries": 10,
+    "synthetic_youtube_queries": 30,
+    "notes": "Recorded live from official Spotify and iTunes APIs for all feasible ISRC/meta queries; synthetic for YouTube Music and held-out edge negatives."
+  }
+}

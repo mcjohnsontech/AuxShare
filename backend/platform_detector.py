@@ -1,11 +1,12 @@
-# backend/platform_detector.py (ADD Apple Music support)
+# backend/platform_detector.py
 
 import re
 from typing import Optional, Dict, List
 from platforms.base import MusicPlatform
 from platforms.spotify import SpotifyPlatform
 from platforms.youtube_music import YouTubeMusicPlatform
-from platforms.apple_music import AppleMusicPlatform  # NEW!
+from platforms.apple_music import AppleMusicPlatform
+from platforms.manual import ManualImportPlatform
 
 class PlatformDetector:
     """Detect and retrieve the appropriate platform handler"""
@@ -21,6 +22,7 @@ class PlatformDetector:
                 ],
                 'display_name': 'Spotify',
                 'can_extract': True,  # Can use as source
+                'can_target': True,
                 'icon_id': 'spotify'
             },
             'youtube_music': {
@@ -30,6 +32,7 @@ class PlatformDetector:
                 ],
                 'display_name': 'YouTube Music',
                 'can_extract': True,
+                'can_target': True,
                 'icon_id': 'youtube'
             },
             'apple_music': {
@@ -38,8 +41,20 @@ class PlatformDetector:
                     r'music\.apple\.com/.+/(playlist|album|song)',
                 ],
                 'display_name': 'Apple Music',
-                'can_extract': False,  # FREE version can't extract
+                'can_extract': False,  # Blocked without MusicKit
+                'can_target': True,
                 'icon_id': 'apple'
+            },
+            'manual': {
+                'handler': ManualImportPlatform(),
+                'patterns': [
+                    r'^manual://',
+                    r'^manual:',
+                ],
+                'display_name': 'Manual Import',
+                'can_extract': True,
+                'can_target': False,
+                'icon_id': 'file-text'
             }
         }
     
@@ -92,8 +107,16 @@ class PlatformDetector:
         ]
     
     def get_supported_targets(self) -> List[Dict]:
-        """Get all platforms (all can be targets)"""
-        return self.get_supported_platforms()
+        """Get all platforms that can be targets"""
+        return [
+            {
+                'name': name,
+                'display_name': config['display_name'],
+                'icon': config['icon_id']
+            }
+            for name, config in self.platforms.items()
+            if config.get('can_target', True)
+        ]
 
 
 # Test it!
@@ -111,7 +134,8 @@ if __name__ == "__main__":
     test_urls = [
         "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M",
         "https://music.youtube.com/playlist?list=RDCLAK5uy_kmPRjHDECIcuVwnKsx",
-        "https://music.apple.com/us/playlist/todays-hits/pl.f4d106fed2bd41149aaacabb233eb5eb"
+        "https://music.apple.com/us/playlist/todays-hits/pl.f4d106fed2bd41149aaacabb233eb5eb",
+        "manual://Take%20On%20Me%20-%20a-ha%0ABlinding%20Lights%20-%20The%20Weeknd"
     ]
     
     print("🔍 Testing URL Detection:\n")

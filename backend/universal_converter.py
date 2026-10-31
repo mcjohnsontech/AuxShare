@@ -3,6 +3,7 @@
 from typing import List, Dict
 from platform_detector import PlatformDetector
 from platforms.base import MusicPlatform
+from matching import canonical_from_track
 
 class UniversalConverter:
     """Convert playlists between any supported platforms"""
@@ -33,8 +34,8 @@ class UniversalConverter:
         # Step 2: Check if source platform can be extracted
         if not source_platform_info['can_extract']:
             raise ValueError(
-                f"Error: {source_platform_info['display_name']} playlists cannot be used as source with free API.\n"
-                f"Supported sources: Spotify, YouTube Music\n"
+                f"{source_platform_info['display_name']} playlist extraction is not supported yet (requires developer credentials). "
+                f"Supported sources: Spotify, YouTube Music, Manual Import. "
                 f"You can still convert TO {source_platform_info['display_name']}!"
             )
         
@@ -61,41 +62,57 @@ class UniversalConverter:
         # Step 5: Match each track to target platform
         matched_tracks = []
         for i, track in enumerate(source_tracks, 1):
-            print(f"  [{i}/{len(source_tracks)}] {track['title']} - {track['artist']}")
-            
-            target_match = target_platform.match_track(track)
-            
-            # Build result with all source data + target match
-            result = {
-                **track,  # Keep original data
+            canonical = canonical_from_track(track)
+            display_artist = ", ".join(canonical.primaryArtists or canonical.artists)
+            print(f"  [{i}/{len(source_tracks)}] {canonical.title} - {display_artist}")
+
+            target_match = target_platform.match_track(canonical)
+
+            # Keep legacy fields expected by the frontend, but derive an
+            # ``artist`` string for adapters (manual import, APIs) that only
+            # provide ``artists``.
+            result = {**track}
+            if not result.get('title'):
+                result['title'] = canonical.title
+            if not result.get('artist'):
+                result['artist'] = display_artist
+            if not result.get('artists'):
+                result['artists'] = ", ".join(canonical.artists)
+            if canonical.album and not result.get('album'):
+                result['album'] = canonical.album
+            if canonical.durationMs and not result.get('duration_ms'):
+                result['duration_ms'] = canonical.durationMs
+            if canonical.isrc and not result.get('isrc'):
+                result['isrc'] = canonical.isrc
+
+            result.update({
                 f'{target_platform.name}_id': target_match['id'] if target_match else None,
                 f'{target_platform.name}_match_method': target_match.get('match_method') if target_match else None,
-                f'{target_platform.name}_confidence': target_match.get('confidence', 0) if target_match else 0
-            }
+                f'{target_platform.name}_confidence': target_match.get('confidence', 0) if target_match else 0,
+                f'{target_platform.name}_match_score': target_match.get('score', 0) if target_match else 0,
+                f'{target_platform.name}_match_flags': target_match.get('flags', []) if target_match else [],
+            })
             
             # Add platform-specific fields if target match exists
             if target_match:
-                # Determine the URL key for this platform
+                # Prefer a URL supplied by the adapter/candidate, then fall
+                # back to the platform's known URL format.
                 url_key = f'{target_platform.name}_url'
+                url = target_match.get('url')
                 
-                # Add URL based on platform
                 if target_platform.name == 'apple_music':
-                    if 'apple_music_url' in target_match:
-                        result[url_key] = target_match['apple_music_url']
-                    
-                    # Add preview URL and artwork for Apple Music
+                    url = url or target_match.get('apple_music_url')
                     if 'preview_url' in target_match:
                         result['preview_url'] = target_match['preview_url']
                     if 'artwork_url' in target_match:
                         result['artwork_url'] = target_match['artwork_url']
+                elif target_platform.name == 'youtube_music' and not url:
+                    url = f"https://music.youtube.com/watch?v={target_match['id']}"
+                elif target_platform.name == 'spotify' and not url:
+                    url = f"https://open.spotify.com/track/{target_match['id']}"
                 
-                elif target_platform.name == 'youtube_music':
-                    # Generate YouTube Music URL from ID
-                    result[url_key] = f"https://music.youtube.com/watch?v={target_match['id']}"
-                
-                elif target_platform.name == 'spotify':
-                    # Generate Spotify URL from ID
-                    result[url_key] = f"https://open.spotify.com/track/{target_match['id']}"
+                if url:
+                    result[url_key] = url
                 
                 # Add any other metadata from target match
                 if 'album' in target_match and not result.get('album'):

@@ -153,6 +153,15 @@ class YouTubeMusicPlatform(MusicPlatform):
             print(f"   ⚠️  YouTube Music search failed for '{title}': {e}")
         
         return None
+
+    def search_candidates(self, title: str, artist: str, limit: int = 10) -> List[Dict]:
+        """Return YouTube Music search results for precision-first scoring."""
+        try:
+            return self.client.search_candidates(title, artist, limit=limit)
+        except Exception as e:
+            print(f"   ⚠️  YouTube Music candidate search failed for '{title}': {e}")
+            return []
+
     
     def generate_playback_link(self, track_ids: List[str]) -> str:
         """Generate deep link to YouTube Music"""
