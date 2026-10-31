@@ -8,14 +8,23 @@ import os
 from typing import List, Dict, Optional
 
 class SessionManager:
-    def __init__(self):
-        """Initialize Redis connection"""
-        self.redis_client = redis.Redis(
-            host=os.getenv('REDIS_HOST', 'localhost'),
-            port=int(os.getenv('REDIS_PORT', '6379')),
-            db=int(os.getenv('REDIS_DB', '0')),
-            decode_responses=True  # Automatically decode bytes to strings
-        )
+    def __init__(self, redis_client=None):
+        """Initialize Redis connection, supporting REDIS_URL (Heroku/cloud) or host/port."""
+        if redis_client is not None:
+            self.redis_client = redis_client
+            return
+
+        redis_url = os.getenv('REDIS_URL')
+        if redis_url:
+            ssl_kwargs = {'ssl_cert_reqs': None} if redis_url.startswith('rediss://') else {}
+            self.redis_client = redis.from_url(redis_url, decode_responses=True, **ssl_kwargs)
+        else:
+            self.redis_client = redis.Redis(
+                host=os.getenv('REDIS_HOST', 'localhost'),
+                port=int(os.getenv('REDIS_PORT', '6379')),
+                db=int(os.getenv('REDIS_DB', '0')),
+                decode_responses=True  # Automatically decode bytes to strings
+            )
     
     def generate_code(self) -> str:
         """Generate a cryptographically secure, high-entropy unique session ID"""
