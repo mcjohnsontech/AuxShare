@@ -4,16 +4,88 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light" />
-    <meta name="theme-color" content="#0b1226" />
+
+    <title>AuxShare — Move a playlist. Keep the mix.</title>
     <meta
       name="description"
-      content="Convert a Spotify or YouTube Music playlist, review the matches, and share it with anyone in seconds. No account needed."
+      content="Paste a Spotify or YouTube Music playlist link and AuxShare finds the same songs on any platform. Review every match, then share one link — no account needed."
     />
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232f6bff'/%3E%3Cg fill='white'%3E%3Crect x='8' y='14' width='3' height='9' rx='1.5'/%3E%3Crect x='14' y='8' width='3' height='15' rx='1.5'/%3E%3Crect x='20' y='11' width='3' height='12' rx='1.5'/%3E%3C/g%3E%3C/svg%3E"
+    <meta name="author" content="AuxShare" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#2f6bff" />
+    <meta name="application-name" content="AuxShare" />
+    <meta name="apple-mobile-web-app-title" content="AuxShare" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+    <link rel="canonical" href="__SITE_URL__/" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="AuxShare" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content="__SITE_URL__/" />
+    <meta
+      property="og:title"
+      content="AuxShare — Move a playlist. Keep the mix."
     />
-    <title>AuxShare — move playlists between music services</title>
+    <meta
+      property="og:description"
+      content="Paste any Spotify or YouTube Music playlist and AuxShare finds every song on the platform of your choice. Review the matches, then share one link — no account required."
+    />
+    <meta property="og:image" content="__SITE_URL__/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="AuxShare — playlist converter for Spotify, Apple Music and YouTube Music"
+    />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="AuxShare — Move a playlist. Keep the mix."
+    />
+    <meta
+      name="twitter:description"
+      content="Paste any Spotify or YouTube Music playlist and AuxShare finds every song on the platform of your choice. Review the matches, then share one link."
+    />
+    <meta name="twitter:image" content="__SITE_URL__/og-image.png" />
+    <meta
+      name="twitter:image:alt"
+      content="AuxShare — playlist converter for Spotify, Apple Music and YouTube Music"
+    />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "AuxShare",
+        "url": "__SITE_URL__/",
+        "description": "Paste any Spotify or YouTube Music playlist and AuxShare finds every song on the platform of your choice. Review the matches, then share one link — no account required.",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "featureList": [
+          "Convert Spotify playlists to Apple Music and YouTube Music",
+          "Convert YouTube Music playlists to Spotify and Apple Music",
+          "Confidence-scored track matching with review UI",
+          "Shareable playlist links — no account required",
+          "Export matched playlist directly to Spotify"
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="app"></div>

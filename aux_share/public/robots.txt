@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /join/
+Disallow: /callback
+
+Sitemap: __SITE_URL__/sitemap.xml

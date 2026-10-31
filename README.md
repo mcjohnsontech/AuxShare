@@ -1,359 +1,294 @@
-# AuxShare
+<p align="center">
+  <img src="aux_share/public/favicon.svg" width="72" height="72" alt="AuxShare logo" />
+</p>
 
-AuxShare (shown as **AuxParty** in parts of the UI and API) converts public music
-playlists between supported streaming platforms and creates a short-lived link
-that other people can use to view and play the matched tracks.
+<h1 align="center">AuxShare</h1>
 
-The project is split into:
+<p align="center">
+  Move a playlist. Keep the mix.<br />
+  Convert playlists between Spotify, Apple Music and YouTube Music — then share one link, no account required.
+</p>
 
-- A Vue 3 single-page application in [`aux_share/`](./aux_share/)
-- A FastAPI service in [`backend/`](./backend/)
-- Redis for temporary playlist sessions
+<p align="center">
+  <a href="https://vuejs.org/"><img alt="Vue 3" src="https://img.shields.io/badge/Vue-3-42b883?logo=vuedotjs&logoColor=white" /></a>
+  <a href="https://fastapi.tiangolo.com/"><img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.104-009688?logo=fastapi&logoColor=white" /></a>
+  <a href="https://redis.io/"><img alt="Redis" src="https://img.shields.io/badge/Redis-7-dc382d?logo=redis&logoColor=white" /></a>
+  <a href="https://www.docker.com/"><img alt="Docker" src="https://img.shields.io/badge/Docker-Compose-2496ed?logo=docker&logoColor=white" /></a>
+</p>
 
-## What it does
+---
 
-1. Paste a public Spotify or YouTube Music playlist URL.
-2. Choose a target platform.
-3. The backend fetches the source tracks and searches the target catalog.
-4. Matching statistics and the converted track list are saved in Redis.
-<!-- There should be a layer of creating a playlist on the reciever's platform and filling it with the just acquired music -->
-5. The frontend displays a share URL such as
-   `http://localhost:5173/join/<session-code>`.
-6. Anyone with the link can view the session until it expires. Session codes are
-   cryptographically random, URL-safe identifiers; legacy four-digit codes are
-   still accepted during their deprecation window.
+## Overview
 
-The frontend also includes a Spotify OAuth flow for exporting a Spotify-targeted
-session to a private Spotify playlist.
+AuxShare is a self-hostable playlist converter. Paste a public Spotify or YouTube Music playlist link, choose a destination platform, and AuxShare searches the target catalog, scores every match by confidence, and stores the result as a shareable link. Recipients open the link and browse the converted track list — no login needed.
+
+Three services make up the stack:
+
+- **Frontend** — Vue 3 SPA built with Vite, served as static files.
+- **Backend** — FastAPI service that extracts playlists, matches tracks, manages OAuth and exports to Spotify.
+- **Redis** — Session storage for converted playlists, OAuth state and export idempotency.
+
+## Features
+
+- Convert **Spotify** and **YouTube Music** playlists to **Spotify**, **Apple Music** or **YouTube Music**.
+- Confidence-scored matching with high, medium and low buckets surfaced in the UI.
+- Review the full track list before sharing, with direct links to each matched track.
+- One shareable link per conversion with no account requirement for listeners.
+- In-page playback where supported: Apple Music previews and YouTube playback.
+- Spotify OAuth export to a private playlist, idempotent per account and session.
+- Responsive, accessible interface with keyboard support and reduced-motion handling.
+- Docker Compose deployment with health checks, Redis persistence and an nginx reverse proxy.
 
 ## Supported platforms
 
-| Platform | Source playlists | Target matching | Notes |
-| --- | --- | --- | --- |
-| Spotify | Yes | Yes | Uses Spotipy and Spotify Client Credentials |
-| YouTube Music | Yes | Yes | Uses `ytmusicapi`; public playlists work best |
-| Apple Music | No | Yes | Uses the free iTunes Search API; playlist extraction requires Apple Music MusicKit |
+| Platform | Source | Destination | Notes |
+|---|:---:|:---:|---|
+| Spotify | ✓ | ✓ | Client credentials for reads; OAuth + PKCE for export |
+| YouTube Music | ✓ | ✓ | Anonymous `ytmusicapi`; public playlists |
+| Apple Music | — | ✓ | iTunes Search API; no Apple credentials required |
 
-Apple Music can therefore be selected as a destination, but an Apple Music
-playlist URL cannot currently be used as the source. YouTube Music requests may
-also fail when the upstream site/API changes or a playlist is private.
-
-### YouTube Music connection
-
-YouTube Music is accessed through [`ytmusicapi`](https://github.com/sigma67/ytmusicapi)
-using its anonymous client:
-
-```python
-YTMusic()
-```
-
-The current code does **not** use the official YouTube Data API, so no
-`YOUTUBE_API_KEY`, OAuth client ID, or OAuth secret belongs in `.env`. The
-backend can search tracks and read publicly available playlists without
-YouTube credentials. This is also why the integration can be affected by
-changes to YouTube Music, rate limits, network restrictions, or private
-playlists.
-
-If authenticated YouTube Music access is added later, it should be implemented
-in [`backend/youtube_music_client.py`](./backend/youtube_music_client.py) and
-documented with a specific credential variable; adding an unused environment
-variable now would not change the connection behavior.
+Apple Music is destination-only. YouTube Music extraction depends on public playlist availability.
 
 ## Architecture
 
-### Frontend
-
-The Vue application uses Vue Router and Pinia:
-
-- [`src/views/HomeView.vue`](./aux_share/src/views/HomeView.vue) hosts playlist
-  conversion and the generated session details.
-- [`src/views/JoinView.vue`](./aux_share/src/views/JoinView.vue) loads and plays  a shared session.
-- [`src/components/PlaylistInput.vue`](./aux_share/src/components/PlaylistInput.vue)
-  accepts the source URL and target platform.
-- [`src/stores/playlist.js`](./aux_share/src/stores/playlist.js) manages
-  conversion/session state.
-- [`src/services/api.js`](./aux_share/src/services/api.js) calls the backend.
-
-In the containerized deployment, `VITE_API_URL` is built as an empty string, so
-the browser calls `/api/*` on the frontend's own origin. Nginx serves the built
-frontend and proxies `/api` requests to the backend container — no CORS and no
-cross-origin cookie problems.
-
-When running the Vite dev server (`npm run dev`), set `VITE_API_URL` to the
-backend origin, for example in `aux_share/.env.local`:
-
-```dotenv
-VITE_API_URL=http://localhost:8000
 ```
+Browser
+  │
+  ├── Vue 3 SPA (Vite build)
+  │      │
+  │      └── /api/* ──► nginx (Docker) or Netlify proxy
+  │                           │
+  │                           ▼
+  │                     FastAPI backend
+  │                      ├── platform adapters
+  │                      ├── confidence-scored matching
+  │                      ├── OAuth / PKCE / CSRF
+  │                      ├── export idempotency
+  │                      └── Redis session storage
+  │
+  └── Share link: /join/<session-code>
+```
+
+The frontend calls the API on its own origin. In Docker, nginx proxies `/api` to the backend container. On Netlify, `netlify.toml` configures the same behavior. Keeping the API same-origin avoids CORS and cross-site cookie issues.
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | Vue 3, Vue Router, Pinia, Vite |
+| Styling | Custom CSS design tokens, Lucide icons |
+| Backend | Python 3.11+, FastAPI, Pydantic, Uvicorn |
+| Music APIs | Spotipy, `ytmusicapi`, iTunes Search API |
+| Storage | Redis 7 |
+| Deployment | Docker Compose, nginx, Netlify |
+
+## Quick start with Docker
+
+**Prerequisites:** Docker Desktop (or Docker Engine + Compose v2) and a Spotify developer application.
+
+```bash
+# 1. Copy and fill in the environment file
+cp .env.example .env
+
+# 2. Build and start the stack
+docker compose up --build -d
+
+# 3. Open http://localhost:5173
+```
+
+The API is available at `http://localhost:8000` with interactive docs at `/docs` and `/redoc`.
+
+```bash
+docker compose logs -f          # all logs
+docker compose logs -f backend  # API logs only
+docker compose down             # stop, keep Redis data
+docker compose down -v          # stop and delete Redis data
+docker compose exec redis redis-cli
+```
+
+## Local development
+
+**Prerequisites:** Python 3.10+, Node.js 20+, Redis on `localhost:6379`.
 
 ### Backend
 
-[`backend/main.py`](./backend/main.py) exposes the FastAPI API. The conversion
-pipeline is implemented by:
-
-1. [`platform_detector.py`](./backend/platform_detector.py), which identifies
-   the source URL and selects a platform adapter.
-2. [`universal_converter.py`](./backend/universal_converter.py), which extracts
-   tracks, searches the target platform, and calculates confidence statistics.
-3. Platform adapters in [`backend/platforms/`](./backend/platforms/), which
-   normalize platform-specific APIs into a common interface.
-4. [`session_manager.py`](./backend/session_manager.py), which stores converted
-   results in Redis under a cryptographically random, URL-safe session code.
-
-Sessions expire after 24 hours by default.
-
-## Prerequisites
-
-- Python 3.10+ (3.11 is recommended)
-- Node.js 20.19+ or 22.12+
-- Redis running on `localhost:6379`
-- Spotify developer credentials for Spotify playlist extraction
-- A Spotify application with the backend redirect URI
-  `http://127.0.0.1:8000/api/auth/callback` if Spotify export is needed.
-  Set `SPOTIFY_REDIRECT_URI` if your deployment uses a different public backend URL.
-
-## Setup
-
-### 1. Start Redis
-
-Run Redis locally and confirm that it is available on port `6379`. The backend
-reads `REDIS_HOST`, `REDIS_PORT`, and `REDIS_DB` (defaults shown below) and
-connects to:
-
-```text
-redis://localhost:6379/0
-```
-
-If you use Docker Compose, the `redis` service is only reachable inside the
-Compose network. Run the backend in Compose as well, or start a separate Redis
-instance on the host for a locally run backend.
-
-### 2. Configure backend credentials
-
-Create `backend/.env` (it is ignored by Git):
-
-```dotenv
-# Used by Spotify playlist extraction
-SPOTIPY_CLIENT_ID=your_spotify_client_id
-SPOTIPY_CLIENT_SECRET=your_spotify_client_secret
-
-# Used by the Spotify OAuth export flow
-SPOTIFY_CLIENT_ID=your_spotify_client_id
-SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
-
-# Redis (Docker Compose changes REDIS_HOST to "redis")
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_DB=0
-
-# Optional legacy Apple Music API client
-APPLE_MUSIC_PRIVATE_KEY_PATH=
-APPLE_TEAM_ID=
-APPLE_KEY_ID=
-```
-
-The two Spotify variable pairs are currently both used by the code:
-`SPOTIPY_*` by playlist extraction and `SPOTIFY_*` by OAuth login/callback.
-The Apple Music values are optional; the active free integration uses the
-iTunes Search API and does not need them.
-
-The complete variable list is also available in
-[`.env.example`](./.env.example). Never commit real credentials or private key
-contents.
-
-### 3. Install and run the backend
-
-From the repository root:
-
-```powershell
+```bash
 cd backend
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+.venv\Scripts\activate        # macOS/Linux: source .venv/bin/activate
+pip install -r requirements-dev.txt
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-The API is then available at <http://localhost:8000>. Interactive API
-documentation is available at <http://localhost:8000/swagger> (ReDoc at <http://localhost:8000/redoc>).
+### Frontend
 
-### 4. Install and run the frontend
-
-In a second terminal:
-
-```powershell
+```bash
 cd aux_share
 npm install
 npm run dev
 ```
 
-Open the Vite URL shown in the terminal, normally
-<http://localhost:5173>.
-
-For local development the backend runs on a different origin, so create
-`aux_share/.env.local` pointing at it:
+Create `aux_share/.env.local` to point the dev server at the local API:
 
 ```dotenv
 VITE_API_URL=http://localhost:8000
+VITE_SITE_URL=http://localhost:5173
 ```
 
-## Docker Compose deployment
+Leave `VITE_API_URL` empty for Docker or Netlify, where `/api` is proxied on the same origin.
 
-The repository is structured as a monorepo with one Compose stack containing:
+### Tests
 
-- `frontend`: a production Vite build served by Nginx
-- `backend`: the FastAPI service
-- `redis`: Redis session storage with a persistent named volume
+```bash
+python -m pytest
+```
 
-Copy the example environment file, add the required Spotify credentials, and
-start the stack:
+The test suite runs entirely against local fixtures and mocks. No Spotify, YouTube Music or Apple Music calls are made.
 
-```powershell
-Copy-Item .env.example .env
-# Edit .env with your Spotify credentials and public FRONTEND_URL
+## Configuration
+
+| Variable | Required | Description |
+|---|:---:|---|
+| `FRONTEND_URL` | Yes | Public frontend origin, used in share links and CORS. |
+| `BACKEND_URL` | Yes | Public backend origin. |
+| `SPOTIFY_REDIRECT_URI` | Yes | Spotify OAuth callback URL. Must match the dashboard exactly. |
+| `SPOTIPY_CLIENT_ID` | Yes | Spotify application client ID. |
+| `SPOTIPY_CLIENT_SECRET` | Yes | Spotify application client secret. |
+| `REDIS_HOST` / `REDIS_PORT` / `REDIS_DB` | Yes | Redis connection. Compose sets host to `redis`. |
+| `ENVIRONMENT` | No | `production` restricts CORS to `FRONTEND_URL`. Defaults to `development`. |
+| `COOKIE_SECURE` | Production | Set `true` when served over HTTPS. |
+| `COOKIE_SAMESITE` | No | `lax` (default), `strict`, or `none`. |
+| `AUXSHARE_ENCRYPTION_KEYS` | Production | Comma-separated Fernet key(s) for OAuth token encryption. Required in production. |
+| `VITE_SITE_URL` | No | Canonical origin for Open Graph, Twitter and JSON-LD. Defaults to `https://auxshare.netlify.app`. |
+| `VITE_API_URL` | No | Absolute API URL. Leave empty when `/api` is proxied. |
+
+Never commit `.env`. Only `.env.example` belongs in version control.
+
+## Spotify setup
+
+1. Create an application in the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
+2. Under **Redirect URIs**, add:
+   - Local: `http://127.0.0.1:8000/api/auth/callback`
+   - Production: `https://api.yourdomain.com/api/auth/callback`
+3. Copy the client ID and secret into `SPOTIPY_CLIENT_ID` and `SPOTIPY_CLIENT_SECRET`.
+4. Set `SPOTIFY_REDIRECT_URI` to match the registered callback exactly.
+
+> **Note:** Spotify rejects `localhost` in redirect URIs — use `127.0.0.1` for local development.
+
+## Production deployment
+
+### Frontend on Netlify
+
+The repo includes [`netlify.toml`](./netlify.toml). Configure the Netlify build as:
+
+- Base directory: `aux_share`
+- Build command: `npm run build`
+- Publish directory: `dist`
+
+Set `VITE_SITE_URL` in Netlify to your production domain. To proxy the API on the same origin, uncomment the redirect in `netlify.toml`:
+
+```toml
+[[redirects]]
+  from = "/api/*"
+  to = "https://api.yourdomain.com/api/:splat"
+  status = 200
+  force = true
+```
+
+Leave `VITE_API_URL` empty in that case.
+
+### Backend with Docker Compose
+
+```bash
+cp .env.example .env
+# Edit .env for production values
 docker compose up --build -d
 ```
 
-The application is available at <http://localhost:5173>, the backend API at
-<http://localhost:8000>, and the API documentation at
-<http://localhost:8000/swagger> (ReDoc at <http://localhost:8000/redoc>). Follow service logs with:
+Production checklist:
 
-```powershell
-docker compose logs -f
-```
+- `ENVIRONMENT=production`
+- `COOKIE_SECURE=true`
+- `AUXSHARE_ENCRYPTION_KEYS` set — generate with `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`
+- `FRONTEND_URL` and `BACKEND_URL` are HTTPS origins
+- Production Spotify redirect URI registered
+- API behind HTTPS (reverse proxy or TLS terminator)
+- Redis not exposed on a public port
+- `/api/health` monitored for liveness
 
-Stop the services without deleting Redis data with:
+## API reference
 
-```powershell
-docker compose down
-```
+| Method | Route | Description |
+|---|---|---|
+| `GET` | `/api/health` | Redis and service health. |
+| `GET` | `/api/platforms` | All supported platforms. |
+| `GET` | `/api/platforms/sources` | Platforms usable as a source. |
+| `GET` | `/api/platforms/targets` | Platforms usable as a destination. |
+| `POST` | `/api/convert` | Convert a playlist and create a session. |
+| `GET` | `/api/session/{code}` | Retrieve a session and its tracks. |
+| `GET` | `/api/session/{code}/ttl` | Remaining session lifetime. |
+| `GET` | `/api/auth/login` | Get a Spotify authorization URL. |
+| `GET` | `/api/auth/callback` | Exchange a Spotify authorization code. |
+| `GET` | `/api/auth/status` | Current Spotify authentication status. |
+| `POST` | `/api/export` | Create or reuse a Spotify playlist for a session. |
 
-For a hosted deployment, set `FRONTEND_URL` to the public frontend URL and
-register `<FRONTEND_URL>/callback` as an allowed redirect URI in the Spotify
-developer dashboard. `FRONTEND_PORT` and `BACKEND_PORT` can be changed when the
-host ports are already in use.
-
-## API overview
-
-| Method | Route | Purpose |
-| --- | --- | --- |
-| `GET` | `/` | Basic service information |
-| `GET` | `/api/health` | Health check including Redis status |
-| `GET` | `/api/platforms` | List all supported platforms |
-| `GET` | `/api/platforms/sources` | List source-capable platforms |
-| `GET` | `/api/platforms/targets` | List target platforms |
-| `POST` | `/api/convert` | Convert a playlist and create a session |
-| `GET` | `/api/session/{code}` | Retrieve a shared session |
-| `GET` | `/api/session/{code}/ttl` | Check remaining session lifetime |
-| `GET` | `/api/auth/login` | Get a Spotify authorization URL |
-| `GET` | `/api/auth/callback` | Exchange a Spotify authorization code |
-| `POST` | `/api/export` | Create a Spotify playlist from a Spotify-targeted session |
-| `GET` | `/api/export/status` | Whether the signed-in user already exported a session |
-
-Export is **idempotent** per `(Spotify account, target platform, session code)`:
-clicking Export again returns the playlist that already exists instead of
-creating another one, and never appends duplicate tracks. Pass
-`"force_new": true` to deliberately create a second copy.
-
-`GET /api/export/status?session_code=...&target_platform=spotify` reports
-whether the signed-in account already has a completed export for that session.
-The UI uses it to disable the Export button and link to the playlist; if the
-playlist was deleted on Spotify the status is `exported: false` and the button
-becomes available again.
-
-```powershell
-curl -X POST http://localhost:8000/api/export `
-  -H "Content-Type: application/json" -b cookies.txt `
-  -d '{"session_code":"SESSION_CODE","target_platform":"spotify"}'
-```
-
-Example conversion request:
-
-```powershell
-curl -X POST http://localhost:8000/api/convert `
-  -H "Content-Type: application/json" `
+```bash
+# Convert a playlist
+curl -X POST http://localhost:8000/api/convert \
+  -H "Content-Type: application/json" \
   -d '{"url":"https://open.spotify.com/playlist/PLAYLIST_ID","target_platform":"apple_music"}'
 ```
 
-## Matching statistics
+Export is idempotent per `(Spotify account, session code)`. Repeating the request returns the existing playlist.
 
-Each conversion reports:
+## Project structure
 
-- Total tracks
-- Matched and failed tracks
-- Overall match rate
-- Average confidence
-- High-confidence matches (`>= 90%`)
-- Medium-confidence matches (`70%` to `< 90%`)
-- Low-confidence matches (`< 70%`)
-
-Matched tracks include platform-specific IDs and playback URLs where the
-adapter can provide them. Matching is metadata-based for most cross-platform
-searches, so results should be reviewed before treating them as exact.
-
-## Useful development commands
-
-Frontend commands are defined in [`aux_share/package.json`](./aux_share/package.json):
-
-```powershell
-npm run dev       # Start Vite development server
-npm run build     # Create a production build
-npm run preview   # Preview the production build
 ```
-
-The backend has small executable checks in several modules, for example:
-
-```powershell
-cd backend
-python platform_detector.py
-python universal_converter.py
-```
-
-These checks may call external services and require valid credentials/network
-access.
-
-## Current limitations
-
-- Redis must be reachable for session storage and lookup. Its connection is
-  configured with `REDIS_HOST`, `REDIS_PORT`, and `REDIS_DB`; session lookup
-  rate limiting fails open while Redis is unavailable.
-- Sessions use high-entropy, URL-safe codes and expire after 24 hours. Legacy
-  four-digit codes remain readable until their deprecation window ends.
-- Apple Music playlist extraction is not available through the free integration.
-- YouTube Music playlist extraction depends on the current `ytmusicapi`
-  response format and public playlist availability.
-- Spotify export currently supports Spotify as the target platform only.
-- The default share URL is generated for local development
-  (`http://localhost:5173`); deployments need a configured public frontend URL.
-- Docker Compose uses Nginx to proxy frontend `/api` requests to the backend;
-  direct API access remains available on the published backend port.
-- There is no automated test suite in the repository yet.
-
-## Project layout
-
-```text
 AuxShare/
-├── docker-compose.yml         # Frontend, backend, and Redis orchestration
-├── .env.example               # Container/deployment configuration template
 ├── aux_share/                 # Vue 3 + Vite frontend
-│   ├── Dockerfile             # Production frontend image
-│   ├── nginx.conf             # SPA fallback and API reverse proxy
-│   ├── src/components/        # Input, results, player, sharing, export UI
-│   ├── src/services/          # Axios API client
+│   ├── public/                # Icons, OG image, web manifest, robots.txt
+│   ├── src/components/        # Converter, results, player, sharing and export UI
+│   ├── src/views/             # Home, join and OAuth callback pages
 │   ├── src/stores/            # Pinia state
-│   ├── src/views/             # Home, join, and OAuth callback pages
-│   └── package.json
+│   ├── src/services/          # API client
+│   ├── nginx.conf             # SPA fallback and /api reverse proxy
+│   └── Dockerfile
 ├── backend/                   # FastAPI service
-│   ├── Dockerfile             # Backend image
-│   ├── main.py                # API routes and request models
-│   ├── universal_converter.py # Cross-platform conversion pipeline
-│   ├── session_manager.py     # Redis session persistence
-│   ├── platform_detector.py   # URL detection/platform registry
-│   ├── platforms/             # Platform adapters
-│   └── requirements.txt
-└── README.md
+│   ├── main.py                # API routes
+│   ├── universal_converter.py # Conversion pipeline
+│   ├── platform_detector.py   # URL detection and platform registry
+│   ├── platforms/             # Spotify, YouTube Music, Apple Music adapters
+│   ├── matching/              # Normalization, scoring and policy
+│   ├── jobs/                  # Background job pipeline
+│   ├── security/              # OAuth, PKCE, CSRF, encryption, redaction
+│   ├── evaluation/            # Offline matching harness and fixtures
+│   ├── requirements.txt
+│   ├── requirements-dev.txt
+│   └── Dockerfile
+├── tests/                     # Pytest suite
+├── docker-compose.yml
+├── netlify.toml
+├── pytest.ini
+└── .env.example
 ```
 
-## License
+## Security
 
-No license file is currently included in the repository. Add one before
-redistributing the project.
+- Spotify OAuth uses PKCE with state bound to an httpOnly session cookie.
+- State-changing requests are protected by CSRF origin validation.
+- OAuth tokens are encrypted at rest; `code` and `state` query parameters are redacted from access logs.
+- Share codes are cryptographically random URL-safe identifiers.
+- Sessions expire after 24 hours; exports are idempotent per account and session.
+- Session lookup is rate-limited per IP.
+- The backend refuses to start in production if `AUXSHARE_ENCRYPTION_KEYS` is unset.
+
+## Limitations
+
+- Apple Music is destination-only. Source extraction requires Apple Developer MusicKit credentials.
+- YouTube Music extraction depends on `ytmusicapi` and public playlist availability.
+- Matching is metadata-based and cannot guarantee an exact recording (live vs. studio, remix, etc.).
+- Sessions require Redis and expire after 24 hours.
+
+## Trademarks
+
+AuxShare is an independent project and is not affiliated with, endorsed by, or sponsored by Spotify, Apple, Google or YouTube. All platform names and logos are trademarks of their respective owners.

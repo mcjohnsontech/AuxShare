@@ -44,15 +44,20 @@ class SecureSessionManager:
 
         The `secure` flag is controlled exclusively by the COOKIE_SECURE env var
         (must be "true" for production; never auto-detected from HTTPS to avoid
-        reverse-proxy masking issues).
+        reverse-proxy masking issues). `COOKIE_SAMESITE` defaults to "lax"; set
+        it to "none" only when the frontend and API are on different sites, and
+        only together with COOKIE_SECURE=true.
         """
         is_secure = os.getenv("COOKIE_SECURE", "false").lower() == "true"
+        samesite = os.getenv("COOKIE_SAMESITE", "lax").lower()
+        if samesite not in {"lax", "strict", "none"}:
+            samesite = "lax"
 
         response.set_cookie(
             key=SESSION_COOKIE_NAME,
             value=session_id,
             httponly=True,
-            samesite="lax",
+            samesite=samesite,
             secure=is_secure,
             max_age=86400 * 30,  # 30 days
             path="/"

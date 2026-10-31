@@ -94,10 +94,10 @@ tags_metadata = [
 ]
 
 app = FastAPI(
-    title="AuxParty API - Secure Playlist Converter",
-    description="Convert playlists between music platforms with precision matching. "
-                "Supports Spotify, YouTube Music, Apple Music (as target), and Manual Import.",
-    version="2.1.0",
+    title="AuxShare API",
+    description="Convert public playlists between Spotify, YouTube Music and Apple Music, "
+                "with confidence-scored track matching and shareable sessions.",
+    version="2.2.0",
     openapi_tags=tags_metadata,
     docs_url="/swagger",
     redoc_url="/redoc",
@@ -105,15 +105,17 @@ app = FastAPI(
 )
 
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
-allowed_origins = [
-    frontend_url,
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000"
-]
+environment = os.getenv("ENVIRONMENT", "development").lower()
+allowed_origins = [frontend_url]
+if environment != "production":
+    allowed_origins += [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
 
 app.add_middleware(
     CORSMiddleware,
@@ -182,7 +184,7 @@ class ExportRequest(BaseModel):
     session_code: str
     target_platform: str
     access_token: Optional[str] = None
-    playlist_name: Optional[str] = "AuxParty Session"
+    playlist_name: Optional[str] = "AuxShare Session"
     # Export is idempotent per (Spotify account, target platform, session).
     # Set this only when the user explicitly asks for another copy.
     force_new: bool = False
@@ -190,9 +192,9 @@ class ExportRequest(BaseModel):
 @app.get("/")
 async def root():
     return {
-        "message": "AuxParty API - Share music across any platform!",
-        "version": "2.1",
-        "features": ["Spotify", "YouTube Music", "Apple Music (FREE)", "Manual Import"],
+        "message": "AuxShare API - Move playlists between music services.",
+        "version": "2.2",
+        "features": ["Spotify", "YouTube Music", "Apple Music", "Manual Import"],
         "security": "PKCE + Server-side Encrypted Sessions + CSRF Protection"
     }
 
@@ -637,7 +639,7 @@ async def export_playlist(request: ExportRequest, req: Request):
                     playlist_id = platform.create_playlist(
                         access_token,
                         request.playlist_name,
-                        f"Created with AuxParty 🎵 {marker}"
+                        f"Created with AuxShare - {marker}"
                     )
                     created_new = True
                     # Persist immediately so a crash mid-add cannot duplicate it.
