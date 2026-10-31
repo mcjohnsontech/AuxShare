@@ -45,6 +45,7 @@
 import { computed } from 'vue'
 import { Check, Copy, ExternalLink, Link2 } from 'lucide-vue-next'
 import { useClipboard } from '@/composables/useClipboard'
+import { shareUrlFor } from '@/lib/share'
 
 const props = defineProps({
   code: {
@@ -59,11 +60,7 @@ const props = defineProps({
 
 const { state: copyState, copy } = useClipboard()
 
-const displayUrl = computed(() => {
-  if (props.shareUrl) return props.shareUrl
-  const origin = typeof window === 'undefined' ? '' : window.location.origin
-  return `${origin}/join/${props.code}`
-})
+const displayUrl = computed(() => shareUrlFor(props.code, props.shareUrl))
 
 const copyLabel = computed(() => {
   if (copyState.value === 'copied') return 'Link copied'
@@ -84,7 +81,7 @@ function copyLink() {
 
 <style scoped>
 .share-card {
-  padding: var(--space-4) var(--space-5);
+  padding: clamp(18px, 3vw, 28px);
   border: 1px solid var(--on-ink-line);
   border-radius: var(--radius-lg);
   background: var(--ink);
@@ -102,7 +99,7 @@ function copyLink() {
 
 .share-title h2 {
   color: var(--on-ink);
-  font-size: var(--text-md);
+  font-size: 22px;
   letter-spacing: var(--tracking-tight);
 }
 
@@ -219,7 +216,7 @@ function copyLink() {
 
 @media (max-width: 640px) {
   .share-card {
-    padding: var(--space-4);
+    padding: clamp(18px, 3vw, 28px);
   }
 
   .share-head {

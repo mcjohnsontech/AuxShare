@@ -274,14 +274,8 @@ const playButtonLabel = computed(() => {
   place-items: center;
   width: 100%;
   height: 100%;
-  color: var(--text-faint);
-  background:
-    repeating-linear-gradient(
-      -45deg,
-      transparent 0 6px,
-      rgba(11, 21, 50, 0.035) 6px 12px
-    ),
-    var(--surface-2);
+  color: #fff;
+  background: radial-gradient(ellipse at 95% 0%, #ffd7a1, #f7a16a 20%, transparent 60%), linear-gradient(140deg, #91b8ff, #2452ff);
 }
 
 .main {

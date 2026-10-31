@@ -1,8 +1,9 @@
 <template>
   <section class="converter" aria-labelledby="converter-heading">
     <div class="converter-head">
-      <p class="eyebrow">Start a conversion</p>
-      <h2 id="converter-heading">Paste a playlist, pick a destination.</h2>
+      <p class="eyebrow">YOUR NEXT SHARED MIX</p>
+      <h2 id="converter-heading">Start with a link.</h2>
+      <p class="converter-intro">Their next favorite song might already be in your playlist.</p>
     </div>
 
     <form novalidate @submit.prevent="handleSubmit">
@@ -80,7 +81,7 @@
 
       <button type="submit" class="submit-button" :disabled="!canSubmit" :aria-busy="busy">
         <Loader2 v-if="busy" class="spin" :size="18" aria-hidden="true" />
-        <span>{{ busy ? 'Converting playlist…' : 'Convert playlist' }}</span>
+        <span>{{ busy ? 'Converting playlist…' : 'Convert & share' }}</span>
         <ArrowRight v-if="!busy" :size="18" aria-hidden="true" />
       </button>
 
@@ -244,15 +245,15 @@ defineExpose({
 
 <style scoped>
 .converter {
-  padding: var(--space-5);
+  padding: 32px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   background: var(--surface);
-  box-shadow: var(--shadow);
+  box-shadow: 0 4px 8px #49341a03, 0 24px 64px -28px #49341a26;
 }
 
 .converter-head {
-  margin-bottom: var(--space-4);
+  margin-bottom: 28px;
 }
 
 .eyebrow {
@@ -265,13 +266,17 @@ defineExpose({
 }
 
 .converter-head h2 {
-  font-size: var(--text-lg);
+  margin-top: 10px;
+  font-size: 32px;
+  font-weight: 800;
   letter-spacing: var(--tracking-tight);
 }
 
+.converter-intro { margin-top: 10px; color: var(--text-muted); font-size: 13px; line-height: 1.65; max-width: 34ch; }
+
 .step + .step {
-  margin-top: var(--space-4);
-  padding-top: var(--space-4);
+  margin-top: 24px;
+  padding-top: 24px;
   border-top: 1px solid var(--divider);
 }
 
@@ -285,8 +290,8 @@ defineExpose({
 .step-number {
   display: grid;
   place-items: center;
-  flex: 0 0 22px;
-  height: 22px;
+  flex: 0 0 25px;
+  height: 25px;
   margin-top: 1px;
   border-radius: 50%;
   background: var(--blue-50);
@@ -320,8 +325,8 @@ defineExpose({
   gap: 8px;
   padding: 0 8px 0 12px;
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
+  border-radius: 12px;
+  background: var(--bg);
   transition:
     border-color var(--dur-1) var(--ease-out),
     box-shadow var(--dur-1) var(--ease-out);
@@ -450,9 +455,9 @@ defineExpose({
   min-height: var(--control-lg);
   margin-top: var(--space-4);
   padding: 0 18px;
-  border: 1px solid var(--blue-700);
-  border-radius: var(--radius-sm);
-  background: var(--blue-600);
+  border: 1px solid var(--brand);
+  border-radius: 12px;
+  background: var(--brand);
   color: #fff;
   font-size: var(--text-base);
   font-weight: var(--weight-semibold);
@@ -469,9 +474,9 @@ defineExpose({
 }
 
 .submit-button:disabled {
-  background: var(--blue-50);
-  border-color: var(--blue-200);
-  color: var(--blue-800);
+  background: #e7e9f2;
+  border-color: #e7e9f2;
+  color: #626777;
   box-shadow: none;
 }
 
@@ -548,11 +553,11 @@ defineExpose({
 
 @media (max-width: 560px) {
   .converter {
-    padding: var(--space-4);
+    padding: 24px 20px;
   }
 
   .converter-head h2 {
-    font-size: var(--text-md);
+    font-size: 28px;
   }
 }
 </style>

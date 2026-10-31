@@ -2,15 +2,11 @@
   <header class="app-header">
     <div class="app-header-inner">
       <RouterLink to="/" class="brand" aria-label="AuxShare — go to the converter">
-        <span class="brand-mark" aria-hidden="true">
-          <span class="brand-bar" style="height: 8px"></span>
-          <span class="brand-bar" style="height: 15px"></span>
-          <span class="brand-bar" style="height: 11px"></span>
-        </span>
-        <span class="brand-name">AuxShare</span>
+        <span class="brand-name"><span>Aux</span>Share<span class="brand-period">.</span></span>
       </RouterLink>
 
       <p v-if="tagline" class="brand-tagline">{{ tagline }}</p>
+      <nav class="header-nav" aria-label="Main navigation"><RouterLink to="/#how-it-works">How it works</RouterLink></nav>
 
       <div class="header-actions">
         <slot />
@@ -31,79 +27,17 @@ defineProps({
 </script>
 
 <style scoped>
-.app-header {
-  border-bottom: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.86);
-  backdrop-filter: saturate(140%) blur(10px);
-}
-
-.app-header-inner {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  max-width: var(--container);
-  min-height: var(--header-height);
-  margin: 0 auto;
-  padding: 0 var(--page-gutter);
-}
-
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--text);
-  text-decoration: none;
-  border-radius: var(--radius-sm);
-}
-
-.brand-mark {
-  display: inline-flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 2.5px;
-  width: 32px;
-  height: 32px;
-  padding-bottom: 8px;
-  border-radius: 9px;
-  background: var(--brand);
-  box-shadow: inset 0 -6px 12px rgba(11, 31, 77, 0.18);
-}
-
-.brand-bar {
-  width: 3.5px;
-  border-radius: 2px;
-  background: #fff;
-}
-
-.brand-name {
-  font-size: var(--text-md);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-tight);
-}
-
-.brand-tagline {
-  margin: 0 0 0 var(--space-2);
-  padding-left: var(--space-4);
-  border-left: 1px solid var(--border);
-  color: var(--text-muted);
-  font-size: var(--text-sm);
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-left: auto;
-}
-
-.brand:focus-visible {
-  outline: 2px solid var(--focus-color);
-  outline-offset: 4px;
-}
-
-@media (max-width: 720px) {
-  .brand-tagline {
-    display: none;
-  }
-}
+.app-header { border-bottom: 1px solid var(--border); background: rgba(252,250,247,.94); }
+.app-header-inner { display: flex; align-items: center; gap: 24px; max-width: var(--container); min-height: var(--header-height); margin: auto; padding: 0 var(--page-gutter); }
+.brand { display: inline-flex; color: var(--text); text-decoration: none; border-radius: 6px; }
+.brand-name { font-size: 30px; font-weight: 850; letter-spacing: -.065em; }
+.brand-name > span { color: var(--brand); }
+.brand-period { margin-left: 1px; }
+.brand-tagline { color: var(--text-faint); font-size: 12px; }
+.header-nav { margin-left: auto; }
+.header-nav a { color: var(--text-muted); font-size: 12px; font-weight: 600; text-decoration: none; }
+.header-nav a:hover { color: var(--brand); }
+.header-actions { display: flex; align-items: center; gap: 8px; }
+.brand:focus-visible { outline: 2px solid var(--focus-color); outline-offset: 4px; }
+@media (max-width: 720px) { .brand-tagline, .header-nav { display: none; }.header-actions { margin-left: auto; }.app-header-inner { min-height: 72px; } }
 </style>

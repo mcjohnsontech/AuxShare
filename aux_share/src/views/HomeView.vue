@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <AppHeader tagline="Playlist converter">
+    <AppHeader tagline="Good music travels">
       <span class="header-note">
         <LockKeyhole :size="13" aria-hidden="true" />
         No login required
@@ -20,55 +20,21 @@
         <!-- ---------------------------------------------------------- -->
         <div v-show="mode === 'convert'" class="convert-layout">
           <section class="hero" aria-labelledby="hero-heading">
-            <p class="eyebrow"><span class="eyebrow-tick" aria-hidden="true"></span>Playlist converter</p>
+            <p class="eyebrow"><span class="eyebrow-tick" aria-hidden="true"></span>FOR THE PEOPLE YOU SEND MUSIC TO</p>
             <h1 id="hero-heading" class="hero-title">
-              Move a playlist.<br />
-              <span>Keep the mix.</span>
+              Your playlist.<br />
+              <span>Their platform.</span>
             </h1>
             <p class="hero-lede">
-              Bring a Spotify or YouTube Music playlist to another service in seconds.
-              Review what matched, then share one link that opens instantly — with in-page
-              playback where the destination allows it.
+              You found the perfect mix. They use a different music app.
+              Turn your Spotify or YouTube Music playlist into a link
+              they can enjoy on their platform.
             </p>
 
-            <ul class="proof">
-              <li>
-                <span class="proof-icon" aria-hidden="true"><ListChecks :size="17" /></span>
-                <span class="proof-copy">
-                  <strong>See every match</strong>
-                  <span>All converted tracks are shown up front, with confidence and direct links.</span>
-                </span>
-              </li>
-              <li>
-                <span class="proof-icon" aria-hidden="true"><Share2 :size="17" /></span>
-                <span class="proof-copy">
-                  <strong>One link, no account</strong>
-                  <span>Send the playlist to friends. They open it on any device — no sign-up.</span>
-                </span>
-              </li>
-              <li>
-                <span class="proof-icon" aria-hidden="true"><AudioLines :size="17" /></span>
-                <span class="proof-copy">
-                  <strong>Play where it can</strong>
-                  <span>Apple Music previews and YouTube playback get a queue that advances automatically. Spotify tracks open in Spotify.</span>
-                </span>
-              </li>
-            </ul>
-
-            <div class="source-line">
-              <span class="source-label">Sources</span>
-              <span class="source-platform"><PlatformMark platform="spotify" size="sm" />Spotify</span>
-              <span class="source-platform"><PlatformMark platform="youtube_music" size="sm" />YouTube Music</span>
-            </div>
-            <div class="source-line is-destinations">
-              <span class="source-label">Destinations</span>
-              <span class="source-platform"><PlatformMark platform="spotify" size="sm" />Spotify</span>
-              <span class="source-platform"><PlatformMark platform="apple_music" size="sm" />Apple Music</span>
-              <span class="source-platform"><PlatformMark platform="youtube_music" size="sm" />YouTube Music</span>
-            </div>
+            <PlaylistBridge />
           </section>
 
-          <div class="form-column">
+          <div id="converter" class="form-column">
             <PlaylistInput ref="playlistInput" @converted="handleConverted" />
             <p class="form-footnote">
               <Info :size="13" aria-hidden="true" />
@@ -76,6 +42,16 @@
             </p>
           </div>
         </div>
+
+        <section v-show="mode === 'convert'" id="how-it-works" class="how-it-works" aria-labelledby="how-heading">
+          <div class="section-intro"><p class="eyebrow">LESS FRICTION. MORE MUSIC.</p><h2 id="how-heading">A good playlist deserves<br />good company.</h2><p>No rebuilding it song by song. No “I don’t use that app.”</p></div>
+          <ol class="how-steps">
+            <li><span class="how-number">01</span><Link2 :size="24" aria-hidden="true" /><h3>Bring your playlist.</h3><p>Copy a public Spotify or YouTube Music playlist link. Paste it above.</p></li>
+            <li><span class="how-number">02</span><ListChecks :size="24" aria-hidden="true" /><h3>Find their version.</h3><p>Choose their music app. Review the matches so you know what made the move.</p></li>
+            <li><span class="how-number">03</span><Share2 :size="24" aria-hidden="true" /><h3>Send a little feeling.</h3><p>Share one link. They open the mix on their device, with no AuxShare account needed.</p></li>
+          </ol>
+          <div class="supported-services"><span>Good taste. More places.</span><span><PlatformMark platform="spotify" size="sm" />Spotify</span><span><PlatformMark platform="apple_music" size="sm" />Apple Music</span><span><PlatformMark platform="youtube_music" size="sm" />YouTube Music</span></div>
+        </section>
 
         <!-- ---------------------------------------------------------- -->
         <!-- Results                                                     -->
@@ -155,7 +131,7 @@
     </main>
 
     <footer class="site-footer">
-      <p>AuxShare · Move playlists between services without losing the mix.</p>
+      <p>AuxShare · Share the music. Keep the mix.</p>
       <p>Shared links expire after 24 hours.</p>
     </footer>
   </div>
@@ -168,16 +144,17 @@ import {
   AlertCircle,
   AlertTriangle,
   ArrowRight,
-  AudioLines,
   CheckCircle2,
   Headphones,
   Info,
   ListChecks,
   LockKeyhole,
+  Link2,
   Plus,
   Share2,
 } from 'lucide-vue-next'
 import AppHeader from '@/components/AppHeader.vue'
+import PlaylistBridge from '@/components/PlaylistBridge.vue'
 import PlaylistInput from '@/components/PlaylistInput.vue'
 import ShareLink from '@/components/ShareLink.vue'
 import MatchStats from '@/components/MatchStats.vue'
@@ -263,9 +240,7 @@ async function startAnother() {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background:
-    radial-gradient(1100px 420px at 18% -180px, rgba(47, 107, 255, 0.1), transparent 70%),
-    var(--bg);
+  background: var(--bg);
 }
 
 .header-note {
@@ -288,7 +263,7 @@ async function startAnother() {
 .page-inner {
   max-width: var(--container);
   margin: 0 auto;
-  padding: clamp(20px, 4vw, 44px) var(--page-gutter) clamp(32px, 5vw, 64px);
+  padding: clamp(32px, 5vw, 68px) var(--page-gutter) 48px;
 }
 
 .auth-banner {
@@ -333,7 +308,7 @@ async function startAnother() {
 
 .convert-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(380px, 430px);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   align-items: start;
   gap: clamp(28px, 5vw, 72px);
   padding-top: clamp(4px, 2vw, 24px);
@@ -364,105 +339,28 @@ async function startAnother() {
 .hero-title {
   margin-top: var(--space-3);
   color: var(--text);
-  font-size: var(--text-3xl);
-  line-height: 1.03;
+  font-size: clamp(3rem, 5.6vw, 4.7rem);
+  font-weight: 850;
+  line-height: 1.02;
   letter-spacing: var(--tracking-display);
 }
 
 .hero-title span {
-  color: var(--blue-600);
+  color: var(--brand);
 }
 
 .hero-lede {
   max-width: 44ch;
   margin-top: var(--space-4);
   color: var(--text-muted);
-  font-size: var(--text-md);
-  line-height: 1.6;
-}
-
-.proof {
-  display: grid;
-  gap: var(--space-3);
-  max-width: 48ch;
-  margin: var(--space-6) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.proof li {
-  display: flex;
-  align-items: flex-start;
-  gap: 11px;
-}
-
-.proof-icon {
-  display: grid;
-  place-items: center;
-  flex: 0 0 34px;
-  height: 34px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--blue-700);
-  box-shadow: var(--shadow-subtle);
-}
-
-.proof-copy {
-  display: block;
-  min-width: 0;
-}
-
-.proof-copy strong {
-  display: block;
-  color: var(--text);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
-}
-
-.proof-copy span {
-  display: block;
-  margin-top: 1px;
-  color: var(--text-muted);
-  font-size: var(--text-xs);
-  line-height: 1.45;
-}
-
-.source-line {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin-top: var(--space-6);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--border);
-  color: var(--text-faint);
-  font-size: var(--text-2xs);
-}
-
-.source-line.is-destinations {
-  margin-top: 8px;
-  padding-top: 0;
-  border-top: 0;
-}
-
-.source-label {
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-}
-
-.source-platform {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--text-muted);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
+  font-size: 17px;
+  line-height: 1.7;
 }
 
 .form-column {
   position: relative;
+  padding-top: 8px;
+  scroll-margin-top: 24px;
 }
 
 .form-footnote {
@@ -520,7 +418,7 @@ async function startAnother() {
 
 .results-title h1 {
   margin-top: 5px;
-  font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.35rem);
+  font-size: clamp(2.25rem, 4vw, 3.5rem);
   letter-spacing: var(--tracking-display);
 }
 
@@ -685,23 +583,18 @@ async function startAnother() {
   .convert-layout {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-5);
-    max-width: 700px;
+    max-width: 620px;
     margin: 0 auto;
   }
 
   .hero-lede {
-    max-width: 60ch;
+    max-width: 48ch;
   }
 }
 
 @media (max-width: 900px) {
-  .proof,
-  .source-line {
-    display: none;
-  }
-
   .hero-title {
-    font-size: clamp(1.85rem, 1.3rem + 3vw, 2.6rem);
+    font-size: clamp(3rem, 8vw, 4.7rem);
   }
 }
 
@@ -747,4 +640,22 @@ async function startAnother() {
     flex-wrap: wrap;
   }
 }
+
+/* The same bold, warm visual language as the sharing card. */
+.how-it-works { margin-top: 100px; padding-top: 56px; border-top: 1px solid var(--border); scroll-margin-top: 32px; }
+.section-intro { text-align: center; }
+.section-intro h2 { margin-top: 14px; font-size: clamp(2rem, 4vw, 3.3rem); font-weight: 850; letter-spacing: -.06em; }
+.section-intro > p:last-child { margin-top: 16px; color: var(--text-muted); font-size: 15px; }
+.how-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; list-style: none; padding: 0; margin: 44px 0 0; }
+.how-steps li { position: relative; padding: 24px 0; border-top: 2px solid var(--text); }
+.how-steps svg { color: var(--brand); }
+.how-number { position: absolute; top: 22px; right: 0; color: #a19b93; font-size: 13px; }
+.how-steps h3 { margin-top: 22px; font-size: 20px; font-weight: 750; }
+.how-steps p { margin-top: 10px; color: var(--text-muted); font-size: 14px; line-height: 1.7; max-width: 33ch; }
+.supported-services { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 28px; margin-top: 32px; padding: 26px 0; border-top: 1px solid var(--border); }
+.supported-services > span { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+.supported-services > span:first-child { color: var(--text-faint); font-size: 12px; font-weight: 450; }
+@media (max-width: 720px) { .how-it-works { margin-top: 60px; padding-top: 40px; }.how-steps { grid-template-columns: 1fr; gap: 8px; margin-top: 30px; }.how-steps li { padding: 22px 0; }.how-steps h3 { margin-top: 14px; }.how-steps p { max-width: 48ch; }.supported-services { gap: 16px; }.supported-services > span:first-child { flex-basis: 100%; justify-content: center; } }
+
+@media (max-width: 360px) { .hero-title { font-size: 2.55rem; } }
 </style>

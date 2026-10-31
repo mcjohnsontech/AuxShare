@@ -119,7 +119,7 @@
     </main>
 
     <footer class="site-footer">
-      <p>AuxShare · Move playlists between services without losing the mix.</p>
+      <p>AuxShare · Share the music. Keep the mix.</p>
       <RouterLink to="/">Convert a playlist</RouterLink>
     </footer>
 
@@ -318,9 +318,7 @@ watch(
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background:
-    radial-gradient(900px 360px at 82% -160px, rgba(47, 107, 255, 0.09), transparent 70%),
-    var(--bg);
+  background: var(--bg);
 }
 
 .header-cta {
@@ -349,9 +347,9 @@ watch(
 }
 
 .page-inner {
-  max-width: 940px;
+  max-width: 1060px;
   margin: 0 auto;
-  padding: clamp(20px, 4vw, 40px) var(--page-gutter) clamp(32px, 5vw, 56px);
+  padding: clamp(32px, 5vw, 64px) var(--page-gutter) clamp(32px, 5vw, 56px);
 }
 
 /* ---- Playlist header ------------------------------------------------ */
@@ -390,7 +388,8 @@ watch(
 
 .playlist-title h1 {
   margin-top: var(--space-2);
-  font-size: clamp(1.65rem, 1.2rem + 1.8vw, 2.4rem);
+  font-size: clamp(2.1rem, 4.5vw, 3.6rem);
+  font-weight: 850;
   letter-spacing: var(--tracking-display);
 }
 
@@ -623,7 +622,7 @@ watch(
   justify-content: space-between;
   gap: var(--space-2);
   width: 100%;
-  max-width: 940px;
+  max-width: 1060px;
   margin: 0 auto;
   padding: var(--space-5) var(--page-gutter) var(--space-6);
   border-top: 1px solid var(--border);

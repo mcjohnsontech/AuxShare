@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'Inter Variable';
+  src: url('/fonts/InterVariable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 /*
  * AuxShare design tokens.
  *
@@ -15,9 +23,9 @@
   --blue-200: #c3d6ff;
   --blue-300: #8db2ff;
   --blue-400: #5c8bff;
-  --blue-500: #2f6bff;
-  --blue-600: #1f56e0;
-  --blue-700: #1743b3;
+  --blue-500: #2452ff;
+  --blue-600: #1945e6;
+  --blue-700: #173cc0;
   --blue-800: #13368c;
   --blue-900: #0b1f4d;
 
@@ -29,30 +37,30 @@
   --brand-contrast: #ffffff;
 
   /* ---- Neutral surfaces / ink --------------------------------------- */
-  --bg: #f6f7fb;
-  --bg-subtle: #eef1f8;
+  --bg: #fcfaf7;
+  --bg-subtle: #f3efe9;
   --bg-raised: #ffffff;
   --surface: #ffffff;
-  --surface-2: #f4f6fc;
-  --surface-3: #eaeff9;
+  --surface-2: #f7f4ef;
+  --surface-3: #efebe5;
 
   /* Deep "stage" surfaces: now playing, share card, player. */
-  --ink: #0b1226;
-  --ink-2: #111b35;
-  --ink-3: #1a2745;
+  --ink: #18191c;
+  --ink-2: #222428;
+  --ink-3: #303238;
   --on-ink: #f5f7fd;
-  --on-ink-muted: #a8b4d1;
-  --on-ink-faint: #8592b3;
-  --on-ink-line: #263351;
+  --on-ink-muted: #b8bbc4;
+  --on-ink-faint: #969ba8;
+  --on-ink-line: #36383f;
 
-  --text: #0b1532;
-  --text-muted: #4a5878;
-  --text-faint: #5d6b85;
+  --text: #101217;
+  --text-muted: #595d68;
+  --text-faint: #686c77;
   --text-inverse: #ffffff;
 
-  --border: #e2e7f1;
-  --border-strong: #c8d2e4;
-  --divider: #edf0f7;
+  --border: #e8e4de;
+  --border-strong: #d3cec7;
+  --divider: #f0ede8;
 
   /* ---- Semantic ------------------------------------------------------ */
   --success: #0e7a46;
@@ -88,13 +96,13 @@
   --platform-unknown-soft: var(--surface-2);
 
   /* ---- Type ---------------------------------------------------------- */
-  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Inter Variable", "Inter", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
 
   --text-2xs: 0.6875rem;  /* 11px */
   --text-xs: 0.75rem;     /* 12px */
   --text-sm: 0.8125rem;   /* 13px */
-  --text-base: 0.9375rem; /* 15px */
+  --text-base: 1rem; /* 15px */
   --text-md: 1rem;        /* 16px */
   --text-lg: 1.125rem;    /* 18px */
   --text-xl: 1.375rem;    /* 22px */
@@ -108,10 +116,10 @@
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
-  --weight-bold: 700;
+  --weight-bold: 800;
 
-  --tracking-display: -0.035em;
-  --tracking-tight: -0.015em;
+  --tracking-display: -0.065em;
+  --tracking-tight: -0.035em;
   --tracking-wide: 0.08em;
 
   /* ---- Space --------------------------------------------------------- */
@@ -129,14 +137,14 @@
   --radius-xs: 6px;
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 22px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
   --radius-pill: 999px;
 
   /* ---- Elevation ----------------------------------------------------- */
   --shadow-subtle: 0 1px 2px rgba(11, 21, 50, 0.04);
   --shadow-xs: 0 1px 2px rgba(11, 21, 50, 0.05), 0 1px 1px rgba(11, 21, 50, 0.03);
-  --shadow: 0 1px 2px rgba(11, 21, 50, 0.05), 0 8px 24px -12px rgba(11, 21, 50, 0.18);
+  --shadow: 0 1px 2px rgba(55, 37, 16, 0.03), 0 20px 45px -24px rgba(55, 37, 16, 0.2);
   --shadow-md: 0 2px 4px rgba(11, 21, 50, 0.05), 0 16px 40px -16px rgba(11, 21, 50, 0.25);
   --shadow-lift: 0 24px 64px -24px rgba(4, 10, 26, 0.55);
   --focus-ring: 0 0 0 3px rgba(47, 107, 255, 0.35);
@@ -153,10 +161,10 @@
   --control-sm: 36px;
   --control: 44px;
   --control-lg: 52px;
-  --container: 1080px;
+  --container: 1200px;
   --container-narrow: 760px;
   --page-gutter: clamp(16px, 4vw, 32px);
-  --header-height: 64px;
+  --header-height: 88px;
 }
 
 @media (prefers-reduced-motion: reduce) {

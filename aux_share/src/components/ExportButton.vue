@@ -226,11 +226,11 @@ onMounted(async () => {
 
 <style scoped>
 .export-panel {
-  padding: var(--space-4);
+  padding: clamp(18px, 3vw, 28px);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
-  box-shadow: var(--shadow-xs);
+  box-shadow: var(--shadow);
 }
 
 .export-head {

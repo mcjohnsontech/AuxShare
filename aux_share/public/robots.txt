@@ -1,3 +1,14 @@
+# Link unfurlers may read shared playlists; general search crawlers stay out.
+User-agent: facebookexternalhit
+User-agent: Facebot
+User-agent: Twitterbot
+User-agent: LinkedInBot
+User-agent: Slackbot
+User-agent: Discordbot
+User-agent: WhatsApp
+User-agent: TelegramBot
+Allow: /
+
 User-agent: *
 Allow: /
 Disallow: /join/

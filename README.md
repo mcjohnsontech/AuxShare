@@ -209,6 +209,27 @@ empty `VITE_API_URL`. For local development, use the `.env.local` values above;
 use localhost frontend/backend URLs and development cookie settings in your
 local backend environment.
 
+### Link previews
+
+Open Graph and Twitter card tags are present in the built HTML, so crawlers do
+not need to execute Vue. Both the homepage and `/join/:code` routes receive
+this metadata through the SPA fallback. The public preview is the optimized
+1200 × 630 `playlist-sharing-preview.jpg`; the PNG is the source asset.
+
+After building, verify the preview locally or against your deployed frontend:
+
+```bash
+cd aux_share
+npm run build
+npm run check:preview
+npm run check:preview -- https://aux-share.vercel.app
+```
+
+The deployed check verifies that a crawler can read metadata on the homepage
+and a shared-link route, and that the image URL returns JPEG bytes. Deploy the
+frontend changes before running it against production. Existing chat previews
+may retain a cached card until that service fetches the page again.
+
 ### Frontend on Netlify
 
 The repo includes [`netlify.toml`](./netlify.toml). Configure the Netlify build as:

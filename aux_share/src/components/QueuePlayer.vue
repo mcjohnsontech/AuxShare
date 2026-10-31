@@ -1065,15 +1065,8 @@ onBeforeUnmount(() => {
 .artwork-fallback {
   display: grid;
   place-items: center;
-  color: var(--on-ink-faint);
-  background:
-    radial-gradient(circle at 30% 20%, rgba(47, 107, 255, 0.24), transparent 60%),
-    repeating-linear-gradient(
-      -45deg,
-      transparent 0 10px,
-      rgba(255, 255, 255, 0.025) 10px 20px
-    ),
-    var(--ink-2);
+  color: #fff;
+  background: radial-gradient(ellipse at 95% 0%, #ffd7a1, #f7a16a 20%, transparent 60%), linear-gradient(140deg, #91b8ff, #2452ff 70%, #ffa869);
 }
 
 .preview-tag {
@@ -1338,8 +1331,8 @@ onBeforeUnmount(() => {
 }
 
 .queue-row.is-current {
-  border-color: rgba(47, 107, 255, 0.5);
-  background: rgba(47, 107, 255, 0.16);
+  border-color: rgba(36, 82, 255, 0.5);
+  background: rgba(36, 82, 255, 0.16);
   color: var(--on-ink);
 }
 
