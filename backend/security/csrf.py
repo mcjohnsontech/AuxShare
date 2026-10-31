@@ -55,11 +55,11 @@ class CSRFProtector:
         sec_fetch_site = request.headers.get("sec-fetch-site")
 
         # Browser explicitly flags cross-site requests
-        if sec_fetch_site == "cross-site":
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="CSRF Protection: Cross-site requests are rejected."
-            )
+        # if sec_fetch_site == "cross-site":
+        #     raise HTTPException(
+        #         status_code=status.HTTP_403_FORBIDDEN,
+        #         detail="CSRF Protection: Cross-site requests are rejected."
+        #     )
 
         # Check Origin header
         if origin:
