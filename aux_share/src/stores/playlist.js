@@ -2,11 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/services/api'
 
-function shareUrlFor(code, provided) {
-  if (provided) return provided
-  if (typeof window === 'undefined') return ''
-  return `${window.location.origin}/join/${code}`
-}
+import { shareUrlFor } from '@/lib/share'
 
 export const usePlaylistStore = defineStore('playlist', () => {
   // Session state

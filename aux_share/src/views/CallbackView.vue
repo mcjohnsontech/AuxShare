@@ -110,7 +110,7 @@ onMounted(async () => {
   width: min(430px, 100%);
   padding: var(--space-6);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   background: var(--surface);
   box-shadow: var(--shadow);
   text-align: center;
@@ -146,7 +146,7 @@ onMounted(async () => {
 
 .callback-card h1 {
   margin-top: var(--space-2);
-  font-size: var(--text-xl);
+  font-size: 30px;
   letter-spacing: var(--tracking-tight);
 }
 

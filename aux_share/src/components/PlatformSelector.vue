@@ -101,10 +101,11 @@ function platformNote(name) {
 .platform-option {
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
-  padding: 11px 12px;
+  padding: 16px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--surface);
@@ -134,18 +135,15 @@ function platformNote(name) {
 
 .option-copy {
   min-width: 0;
-  padding-right: 14px;
+  padding-right: 0;
 }
 
 .option-name {
   display: block;
-  overflow: hidden;
   color: var(--text);
-  font-size: var(--text-sm);
+  font-size: 12px;
   font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-tight);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .option-note {
@@ -199,12 +197,13 @@ function platformNote(name) {
   100% { background-position: -100% 0; }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 400px) {
   .platform-options {
     grid-template-columns: 1fr;
   }
 
   .platform-option {
+    flex-direction: row;
     align-items: center;
     padding: 10px 12px;
   }

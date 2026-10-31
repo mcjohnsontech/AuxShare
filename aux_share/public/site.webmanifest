@@ -1,12 +1,12 @@
 {
   "name": "AuxShare",
   "short_name": "AuxShare",
-  "description": "Paste any Spotify or YouTube Music playlist and AuxShare finds the same songs on the platform of your choice. Review every match, then share one link.",
+  "description": "Share your playlist with someone on another music app. Your playlist. Their platform.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f6f7fb",
-  "theme_color": "#2f6bff",
+  "background_color": "#fcfaf7",
+  "theme_color": "#2452ff",
   "icons": [
     {
       "src": "/icon-192.png",

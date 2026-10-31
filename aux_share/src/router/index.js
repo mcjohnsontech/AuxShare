@@ -7,7 +7,8 @@ import CallbackView from '@/views/CallbackView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  scrollBehavior() {
+  scrollBehavior(to) {
+    if (to.hash) return { el: to.hash, top: 24 }
     return { top: 0 }
   },
   routes: [
@@ -36,7 +37,7 @@ router.afterEach((to) => {
   } else if (to.name === 'callback') {
     document.title = `Connecting Spotify — ${siteName}`
   } else {
-    document.title = 'AuxShare — Convert playlists between Spotify, Apple Music & YouTube Music'
+    document.title = 'AuxShare — Your playlist. Their platform.'
   }
 })
 

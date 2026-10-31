@@ -112,11 +112,11 @@ function numberOrZero(value) {
 
 <style scoped>
 .match-stats {
-  padding: var(--space-4);
+  padding: clamp(18px, 3vw, 28px);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
-  box-shadow: var(--shadow-xs);
+  box-shadow: var(--shadow);
 }
 
 .summary {
@@ -132,7 +132,7 @@ function numberOrZero(value) {
 
 .rate {
   color: var(--text);
-  font-size: var(--text-2xl);
+  font-size: 42px;
   font-weight: var(--weight-bold);
   letter-spacing: var(--tracking-display);
   line-height: 1;
