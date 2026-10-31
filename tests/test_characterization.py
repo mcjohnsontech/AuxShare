@@ -7,6 +7,14 @@ from main import app
 
 client = TestClient(app)
 
+
+@pytest.fixture(autouse=True)
+def isolated_job_pipeline():
+    # API behavior tests do not require a running Redis job store.
+    with patch.object(main, "job_manager") as jobs, patch.object(main, "job_queue"):
+        jobs.create_job.return_value.id = "characterization-test-job"
+        yield
+
 def test_health_check_characterization():
     with patch.object(main.session_manager.redis_client, "ping", return_value=True):
         resp = client.get("/api/health")

@@ -96,7 +96,24 @@ docker compose up --build -d
 # 3. Open http://localhost:5173
 ```
 
-The API is available at `http://localhost:8000` with interactive docs at `/docs` and `/redoc`.
+For local Docker testing, use these values in your private environment file:
+
+```dotenv
+ENVIRONMENT=development
+FRONTEND_URL=http://127.0.0.1:5173
+BACKEND_URL=http://127.0.0.1:8000
+SPOTIFY_REDIRECT_URI=http://127.0.0.1:8000/api/auth/callback
+COOKIE_SECURE=false
+COOKIE_SAMESITE=lax
+```
+
+Use `127.0.0.1` consistently in the browser and register the callback URI in
+Spotify. Keep your encryption key stable between restarts so existing Spotify
+sessions remain readable. A separate ignored environment file can be used with
+`docker compose --env-file .env.docker-test up --build -d` to retain production
+values in `.env`.
+
+The API is available at `http://127.0.0.1:8000` with interactive docs at `/swagger` and `/redoc`.
 
 ```bash
 docker compose logs -f          # all logs
@@ -141,7 +158,14 @@ Leave `VITE_API_URL` empty for Docker or Netlify, where `/api` is proxied on the
 
 ```bash
 python -m pytest
+cd aux_share
+npm run test:export
+npm run build
+npm run check:preview
 ```
+
+Python tests use isolated development settings and mocks; no production
+credentials or live Redis instance are needed.
 
 The test suite runs entirely against local fixtures and mocks. No Spotify, YouTube Music or Apple Music calls are made.
 
@@ -162,7 +186,7 @@ The test suite runs entirely against local fixtures and mocks. No Spotify, YouTu
 | `VITE_SITE_URL` | No | Canonical origin for Open Graph, Twitter and JSON-LD. Defaults to `https://aux-share.vercel.app`. |
 | `VITE_API_URL` | No | Absolute API URL. Leave empty when `/api` is proxied. |
 
-Never commit `.env`. Only `.env.example` belongs in version control.
+Never commit private `.env` files. `aux_share/.env.production` contains only public build URLs and is intentionally versioned.
 
 ## Spotify setup
 
@@ -202,7 +226,8 @@ COOKIE_SAMESITE=none
 Keep Spotify credentials, `REDIS_URL`, and `AUXSHARE_ENCRYPTION_KEYS` in Heroku
 Config Vars. Register the exact `SPOTIFY_REDIRECT_URI` above in the Spotify
 Developer Dashboard. Deploy from the repository root using the existing
-`Procfile` for the web and worker processes.
+`Procfile` for the web and worker processes. The root `.python-version` selects
+Python 3.11 and lets Heroku use the latest available patch release.
 
 Docker retains its same-origin nginx API proxy and explicitly builds with an
 empty `VITE_API_URL`. For local development, use the `.env.local` values above;
