@@ -6,7 +6,7 @@ import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
-const DEFAULT_SITE_URL = 'https://auxshare.netlify.app'
+const DEFAULT_SITE_URL = 'https://aux-share.vercel.app'
 
 // Replace __SITE_URL__ in index.html, robots.txt and sitemap.xml with the
 // deployment origin. Set VITE_SITE_URL at build time to use a custom domain.

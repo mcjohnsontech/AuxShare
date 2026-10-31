@@ -4,6 +4,7 @@
 .env
 .env.*
 !.env.example
+!aux_share/.env.production
 *.pem
 *.key
 *.p12
