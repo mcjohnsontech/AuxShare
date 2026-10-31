@@ -52,7 +52,7 @@ class CSRFProtector:
 
         origin = request.headers.get("origin")
         referer = request.headers.get("referer")
-        sec_fetch_site = request.headers.get("sec-fetch-site")
+        # sec_fetch_site = request.headers.get("sec-fetch-site")
 
         # Browser explicitly flags cross-site requests
         # if sec_fetch_site == "cross-site":

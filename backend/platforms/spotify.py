@@ -96,8 +96,8 @@ class SpotifyPlatform(MusicPlatform):
         headers = {'Authorization': f'Bearer {access_token}'}
         uris: List[str] = []
         url = (
-            f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks'
-            '?fields=next,items(track(uri))&limit=100'
+            f'https://api.spotify.com/v1/playlists/{playlist_id}/items'
+            '?limit=100'
         )
         while url:
             resp = requests.get(url, headers=headers, timeout=15)
@@ -105,7 +105,7 @@ class SpotifyPlatform(MusicPlatform):
                 raise Exception(f"Failed to read playlist tracks: {resp.text}")
             payload = resp.json()
             for item in payload.get('items') or []:
-                track = (item or {}).get('track') or {}
+                track = (item or {}).get('item') or (item or {}).get('track') or {}
                 uri = track.get('uri')
                 if uri:
                     uris.append(uri)
@@ -121,24 +121,23 @@ class SpotifyPlatform(MusicPlatform):
         import requests
 
         headers = {'Authorization': f'Bearer {access_token}'}
-        url = f'https://api.spotify.com/v1/playlists/{playlist_id}?fields=id,tracks(total)'
+        url = f'https://api.spotify.com/v1/playlists/{playlist_id}/items?fields=total&limit=1'
         resp = requests.get(url, headers=headers, timeout=15)
         if resp.status_code == 404:
             return None
         if resp.status_code != 200:
             raise Exception(f"Failed to read playlist: {resp.text}")
         payload = resp.json() or {}
-        return ((payload.get('tracks') or {}).get('total'))
+        return payload.get('total')
 
     def create_playlist(self, access_token: str, name: str, description: str = "") -> str:
         """Create a new playlist and return its ID"""
         import requests
         
-        user_id = self.get_current_user_id(access_token)
         headers = {'Authorization': f'Bearer {access_token}'}
         
         # 2. Create Playlist
-        url = f"https://api.spotify.com/v1/users/{user_id}/playlists"
+        url = "https://api.spotify.com/v1/me/playlists"
         data = {
             "name": name,
             "description": description,
@@ -183,7 +182,7 @@ class SpotifyPlatform(MusicPlatform):
         """Add tracks to a playlist"""
         import requests
         
-        url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+        url = f"https://api.spotify.com/v1/playlists/{playlist_id}/items"
         headers = {'Authorization': f'Bearer {access_token}'}
         
         # Spotify allows max 100 tracks per request
@@ -192,7 +191,7 @@ class SpotifyPlatform(MusicPlatform):
             data = {"uris": chunk}
             if position is not None:
                 data["position"] = position + i
-            resp = requests.post(url, headers=headers, json=data)
+            resp = requests.post(url, headers=headers, json=data, timeout=15)
             if resp.status_code not in [200, 201]:
                 raise Exception(f"Failed to add tracks: {resp.text}")
         return 200

@@ -345,3 +345,27 @@ def test_status_rejects_unsupported_platform():
     resp = _status(platform, redis, target_platform="apple_music")
 
     assert resp.status_code == 400
+
+
+def test_export_uses_matched_spotify_id_instead_of_source_id():
+    platform = _platform()
+    session = {"target_platform": "spotify", "tracks": [
+        {"id": "youtube-source-id", "spotify_id": "matched_spotify_id", "title": "A song"}
+    ]}
+    with patch.dict(SESSION, session, clear=True):
+        result = _post(platform, FakeRedis())
+    assert result.status_code == 200
+    platform.add_tracks_to_playlist.assert_called_once_with("token", "pl_1", ["spotify:track:matched_spotify_id"])
+    platform.match_track.assert_not_called()
+
+
+def test_unmatched_source_id_is_not_added_as_a_spotify_track():
+    platform = _platform()
+    platform.match_track.return_value = None
+    session = {"target_platform": "spotify", "tracks": [
+        {"id": "youtube-source-id", "spotify_id": None, "title": "Unavailable song"}
+    ]}
+    with patch.dict(SESSION, session, clear=True):
+        result = _post(platform, FakeRedis())
+    assert result.status_code == 200
+    platform.add_tracks_to_playlist.assert_not_called()

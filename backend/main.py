@@ -232,6 +232,9 @@ async def convert_playlist(request: ConvertRequest):
         except Exception:
             pass
         
+        if source_platform_name == request.target_platform:
+            raise ValueError("Source and destination platforms must be different. Choose another destination.")
+
         # Create job first (orchestration)
         job = job_manager.create_job(
             source_url=request.url,
@@ -653,10 +656,13 @@ async def export_playlist(request: ExportRequest, req: Request):
         # 5. Search & Add Tracks
         real_uris = []
         for track in tracks:
-            # If we have a spotify ID, use it
-            if session.get('target_platform') == 'spotify' and track.get('id'):
-                real_uris.append(f"spotify:track:{track['id']}")
-                continue
+            # Converted tracks retain their source ID; use the matched Spotify
+            # ID. Only legacy sessions without this field store it in `id`.
+            if session.get('target_platform') == 'spotify':
+                spotify_id = track.get('spotify_id') if 'spotify_id' in track else track.get('id')
+                if spotify_id:
+                    real_uris.append(f"spotify:track:{spotify_id}")
+                    continue
                 
             # Otherwise, quick search
             try:
@@ -738,7 +744,7 @@ async def export_playlist(request: ExportRequest, req: Request):
         try:
             import requests
             headers = {'Authorization': f'Bearer {access_token}'}
-            resp = requests.get(f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks?fields=total&limit=1', headers=headers)
+            resp = requests.get(f'https://api.spotify.com/v1/playlists/{playlist_id}/items?fields=total&limit=1', headers=headers, timeout=15)
             if resp.status_code == 200:
                 total = resp.json().get('total', added)
             else:
@@ -872,6 +878,11 @@ async def create_job(request: CreateJobRequest):
             source_platform = det['name']
     except Exception:
         pass
+    if source_platform == request.target_platform:
+        raise HTTPException(
+            status_code=400,
+            detail="Source and destination platforms must be different. Choose another destination."
+        )
     job = job_manager.create_job(
         source_url=request.source_url,
         source_platform=source_platform,
