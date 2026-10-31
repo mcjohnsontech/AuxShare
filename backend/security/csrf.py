@@ -16,7 +16,10 @@ class CSRFProtector:
     def __init__(self, allowed_origins: Optional[List[str]] = None):
         if allowed_origins is None:
             allowed_origins = []
-            
+        backend_url = os.getenv("BACKEND_URL", "").rstrip("/")
+        if backend_url:
+            allowed_origins.append(backend_url)
+        
         frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
         allowed_origins.append(frontend_url)
         # Add loopback / localhost variants for local dev
